@@ -1,0 +1,740 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Где Артур?</title>
+<meta name="description" content="Живое расписание Артура для Александры Занятой: где он сейчас и когда свободен.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+
+/* Layout: one column; bold live-status hero colored by what Oleg is doing now, stat strip, 7×4 week grid (the "table"), day detail with slot cards. */
+:root{
+  --bg:#FFF4F7; --surface:#FFFFFF; --surface-2:#FBE7EF; --ink:#24103A; --ink-2:#6E5A82; --line:#EED6E2;
+  --accent:#FF2E74; --accent-ink:#FFFFFF; --on-cat:#22102F; --shadow:0 1px 0 rgba(36,16,58,.06),0 10px 30px -18px rgba(36,16,58,.35);
+  --c-sleep:#C8B6FF; --c-rest:#FFD84D; --c-study:#2FD3B4; --c-miss:#FF9DBD; --c-cook:#FF9142; --c-clinic:#86CBFF; --c-together:#FF4F8B; --c-unknown:#EDE3F1;
+  --f-display:"Unbounded","Arial Black",system-ui,sans-serif; --f-body:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif; --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:18px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#130A1F; --surface:#1E1230; --surface-2:#2A1A41; --ink:#FBEEFF; --ink-2:#B7A3C9; --line:#38264F;
+  --accent:#FF4F8B; --accent-ink:#1A0A24; --on-cat:#1A0B26; --shadow:0 1px 0 rgba(0,0,0,.4),0 14px 34px -20px rgba(0,0,0,.9);
+  --c-unknown:#2E2240; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#130A1F; --surface:#1E1230; --surface-2:#2A1A41; --ink:#FBEEFF; --ink-2:#B7A3C9; --line:#38264F;
+  --accent:#FF4F8B; --accent-ink:#1A0A24; --on-cat:#1A0B26; --shadow:0 1px 0 rgba(0,0,0,.4),0 14px 34px -20px rgba(0,0,0,.9);
+  --c-unknown:#2E2240; color-scheme:dark;}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:28px 56px;display:grid;gap:28px}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:8px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.eyebrow b{color:var(--accent);font-weight:700}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(44px,9vw,92px);line-height:.92;letter-spacing:-.03em;margin:6px 0 0;text-wrap:balance}
+h1 .q{color:var(--accent);display:inline-block;transform:rotate(8deg);transform-origin:50% 80%}
+.tag{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1.5px solid var(--ink);font-weight:700;font-size:13px;background:transparent}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;border-radius:999px;border:2px solid var(--ink);background:var(--ink);color:var(--bg);font-weight:800;font-size:14px;transition:transform .15s}
+.btn:hover{transform:translateY(-2px)}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.pink{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.small{padding:6px 12px;font-size:13px}
+
+/* hero */
+.hero{position:relative;border-radius:28px;padding:clamp(20px,4vw,36px);background:var(--hero,var(--c-unknown));color:var(--on-cat);display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:24px;overflow:hidden;box-shadow:var(--shadow)}
+.hero::after{content:"";position:absolute;right:-60px;top:-60px;width:260px;height:260px;border-radius:50%;border:38px solid rgba(255,255,255,.28);pointer-events:none}
+.hero.busy::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(-45deg,rgba(34,16,47,.06) 0 14px,transparent 14px 28px);pointer-events:none}
+.hero>*{position:relative;z-index:1;min-width:0}
+.live{display:flex;align-items:center;gap:10px;font-family:var(--f-mono);font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--on-cat);box-shadow:0 0 0 0 rgba(34,16,47,.5);animation:pulse 1.8s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,16,47,.45)}70%{box-shadow:0 0 0 12px rgba(34,16,47,0)}100%{box-shadow:0 0 0 0 rgba(34,16,47,0)}}
+.state{font-family:var(--f-display);font-weight:800;font-size:clamp(30px,5.4vw,58px);line-height:1;letter-spacing:-.02em;margin:14px 0 10px;text-wrap:balance}
+.badge{display:inline-flex;align-items:center;padding:5px 12px;border-radius:999px;font-weight:800;font-size:13px;background:var(--on-cat);color:var(--hero,#fff);letter-spacing:.02em}
+.hero .quote{font-size:17px;font-weight:600;max-width:46ch;margin:12px 0 0}
+.hero .when{font-family:var(--f-mono);font-size:14px;font-weight:700;margin-top:14px}
+.next{align-self:end;background:rgba(255,255,255,.55);border-radius:20px;padding:18px;display:grid;gap:8px;backdrop-filter:blur(4px)}
+.next .lbl{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;opacity:.75}
+.next .big{font-family:var(--f-display);font-weight:700;font-size:22px;line-height:1.15}
+.next .sub{font-size:14px;font-weight:600}
+.next .btn{justify-self:start;background:var(--on-cat);border-color:var(--on-cat);color:#fff;margin-top:4px}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.stat{background:var(--surface);border:1.5px solid var(--line);border-radius:var(--r);padding:16px 16px 14px;display:grid;gap:4px}
+.stat .n{font-family:var(--f-display);font-weight:800;font-size:clamp(26px,4vw,36px);line-height:1}
+.stat .n small{font-size:.5em;font-weight:700;color:var(--ink-2);margin-left:2px}
+.stat .t{font-size:13px;font-weight:600;color:var(--ink-2)}
+.meter{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin-top:6px}
+.meter i{display:block;height:100%;border-radius:99px;background:var(--accent)}
+
+/* section heads */
+.sec{display:grid;gap:14px}
+.sec-h{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 16px}
+h2{font-family:var(--f-display);font-weight:700;font-size:22px;margin:0;letter-spacing:-.01em}
+.hint{font-size:13px;color:var(--ink-2)}
+
+/* week grid */
+.gridbox{overflow-x:auto;padding-bottom:4px;position:relative}
+.week{display:grid;grid-template-columns:52px repeat(7,minmax(64px,1fr));gap:6px;min-width:560px}
+.wh{display:grid;gap:3px;padding:8px 4px;text-align:center;border-radius:12px;background:transparent;border:2px solid transparent}
+.wh .d{font-family:var(--f-display);font-weight:700;font-size:13px;letter-spacing:.02em}
+.wh .dt{font-family:var(--f-mono);font-size:11.5px;color:var(--ink-2)}
+.wh .ld{height:5px;border-radius:9px;background:var(--surface-2);overflow:hidden;margin-top:3px}
+.wh .ld i{display:block;height:100%;background:var(--ink)}
+.wh.today{border-color:var(--accent)}
+.wh.today .d{color:var(--accent)}
+.wh.sel{background:var(--surface)}
+.tl{font-family:var(--f-mono);font-size:11.5px;color:var(--ink-2);display:flex;align-items:flex-start;justify-content:flex-end;padding-top:6px;padding-right:4px}
+.cell{position:relative;min-height:70px;border-radius:14px;border:0;padding:8px;text-align:left;display:flex;flex-direction:column;justify-content:space-between;gap:4px;background:var(--cc);color:var(--on-cat);transition:transform .15s,box-shadow .15s;overflow:hidden}
+.cell:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.cell.busy{background-image:repeating-linear-gradient(-45deg,rgba(34,16,47,.11) 0 6px,transparent 6px 12px)}
+.cell.unk{background:transparent;border:2px dashed var(--line);color:var(--ink-2)}
+.cell .cl{font-weight:800;font-size:12.5px;line-height:1.1}
+.cell .cs{font-family:var(--f-mono);font-size:10.5px;font-weight:700;opacity:.8;text-transform:lowercase}
+.cell.now{outline:3px solid var(--ink);outline-offset:2px}
+.cell.now::after{content:"сейчас";position:absolute;top:6px;right:6px;font-family:var(--f-mono);font-size:9.5px;font-weight:700;background:var(--on-cat);color:#fff;border-radius:6px;padding:1px 5px}
+.cell.past{opacity:.45}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:13px;font-weight:600;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:14px;height:14px;border-radius:5px;background:var(--cc)}
+.legend i.u{background:transparent;border:2px dashed var(--line)}
+.legend i.s{background:var(--surface-2);background-image:repeating-linear-gradient(-45deg,rgba(34,16,47,.25) 0 3px,transparent 3px 6px)}
+
+/* day detail */
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.tab{flex:0 0 auto;padding:8px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);font-weight:700;font-size:14px}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tab.today:not([aria-selected="true"]){border-color:var(--accent);color:var(--accent)}
+.dayhead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 20px;background:var(--surface);border:1.5px solid var(--line);border-radius:var(--r);padding:16px 18px}
+.dayhead h3{font-family:var(--f-display);font-weight:800;font-size:clamp(22px,4vw,30px);margin:0;letter-spacing:-.01em}
+.dayhead .note{font-size:14px;color:var(--ink-2);font-weight:600}
+.load{display:grid;gap:6px;min-width:200px;flex:1;max-width:320px}
+.load .row{display:flex;justify-content:space-between;font-size:13px;font-weight:700}
+.load .meter i{background:var(--ink)}
+.slots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.slot{background:var(--surface);border:1.5px solid var(--line);border-radius:var(--r);overflow:hidden;display:grid;grid-template-columns:10px minmax(0,1fr)}
+.slot .bar{background:var(--cc)}
+.slot.busy .bar{background-image:repeating-linear-gradient(-45deg,rgba(34,16,47,.2) 0 4px,transparent 4px 8px)}
+.slot.unk .bar{background:var(--surface-2)}
+.slot .in{padding:14px 16px;display:grid;gap:8px;align-content:start}
+.slot .tm{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.slot .tm .mono{font-weight:700;font-size:15px}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:800;background:var(--cc);color:var(--on-cat)}
+.chip.st{background:transparent;color:var(--ink);border:1.5px solid var(--ink)}
+.chip.st.free{background:var(--ink);color:var(--bg)}
+.chip.unk{background:var(--surface-2);color:var(--ink-2)}
+.slot p{margin:0;font-size:15.5px;font-weight:600;overflow-wrap:anywhere}
+.slot a{color:var(--accent);font-weight:700;text-underline-offset:3px}
+.slot .acts{display:flex;flex-wrap:wrap;gap:8px}
+.slot.now{border-color:var(--ink);box-shadow:var(--shadow)}
+
+/* edit */
+.ed{display:grid;gap:8px}
+.ed label{font-size:12px;font-weight:700;color:var(--ink-2);display:grid;gap:4px}
+.ed input,.ed select{width:100%;padding:8px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg)}
+.ed .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.editbar{position:sticky;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:5;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:20px;background:var(--ink);color:var(--bg);box-shadow:var(--shadow)}
+.editbar .btn{border-color:var(--bg)}
+.editbar .btn.ghost{color:var(--bg)}
+.editbar .btn.pink{border-color:var(--accent)}
+.dayedit{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:8px;width:100%}
+
+/* modal */
+.scrim{position:fixed;inset:0;background:rgba(20,8,32,.55);display:grid;place-items:center;padding:16px;z-index:20}
+.modal{width:min(520px,100%);background:var(--surface);color:var(--ink);border-radius:24px;padding:22px;display:grid;gap:14px;box-shadow:var(--shadow);max-height:90vh;overflow:auto}
+.modal h4{font-family:var(--f-display);font-size:20px;margin:0;font-weight:700}
+.modal .sub{font-size:14px;color:var(--ink-2);margin:-6px 0 0}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{padding:7px 12px;border-radius:999px;border:1.5px solid var(--line);background:var(--bg);font-weight:700;font-size:13px}
+.opt[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.modal textarea{width:100%;min-height:110px;resize:vertical;padding:12px;border-radius:14px;border:1.5px solid var(--line);background:var(--bg);font-size:15px}
+.modal .row{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:700;font-size:14px;z-index:30;max-width:calc(100% - 32px);text-align:center}
+footer{font-size:13px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:6px 16px;justify-content:space-between;border-top:1.5px solid var(--line);padding-top:16px}
+
+@media (max-width:820px){
+  .hero{grid-template-columns:minmax(0,1fr)}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .slots{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:520px){ .dayedit{grid-template-columns:minmax(0,1fr)} }
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.chip.mine{background:var(--accent);color:var(--accent-ink)}
+.setup{max-width:640px;display:grid;gap:14px}
+.setup .card{background:var(--surface);border:1.5px solid var(--line);border-radius:var(--r);padding:18px;display:grid;gap:10px}
+.setup input{width:100%;padding:10px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg)}
+.setup pre{margin:0;padding:12px;border-radius:12px;background:var(--surface-2);overflow-x:auto;font-family:var(--f-mono);font-size:13px;white-space:pre-wrap;word-break:break-all}
+.setup ol{margin:0;padding-left:20px;display:grid;gap:6px}
+.chatrow{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:12px;background:var(--surface-2)}
+</style>
+</head>
+<body>
+<div id="root" class="wrap"><p class="hint">Загружаю расписание Артура…</p></div>
+<script src="config.js"></script>
+<script type="application/json" id="plan-data">{"tz": "Europe/Minsk", "days": [{"date": "2026-10-05", "load": null, "note": "", "slots": [{"busy": null, "cat": "unknown", "text": "", "link": ""}, {"busy": null, "cat": "unknown", "text": "", "link": ""}, {"busy": null, "cat": "unknown", "text": "", "link": ""}, {"busy": null, "cat": "unknown", "text": "", "link": ""}]}, {"date": "2026-10-06", "load": null, "note": "", "slots": [{"busy": null, "cat": "unknown", "text": "", "link": ""}, {"busy": null, "cat": "unknown", "text": "", "link": ""}, {"busy": null, "cat": "unknown", "text": "", "link": ""}, {"busy": null, "cat": "unknown", "text": "", "link": ""}]}, {"date": "2026-10-07", "load": null, "note": "Та самая тяжёлая среда (по слухам из четверга)", "slots": [{"busy": null, "cat": "unknown", "text": "", "link": ""}, {"busy": null, "cat": "unknown", "text": "", "link": ""}, {"busy": null, "cat": "unknown", "text": "", "link": ""}, {"busy": null, "cat": "unknown", "text": "", "link": ""}]}, {"date": "2026-10-08", "load": 50, "note": "", "slots": [{"busy": true, "cat": "sleep", "text": "Сплю после тяжёлой среды", "link": ""}, {"busy": false, "cat": "rest", "text": "12:30–15:00 отдыхаю, чай пью, ничего не делаю", "link": ""}, {"busy": true, "cat": "study", "text": "Университет, я студент (почти дипломированный)", "link": ""}, {"busy": false, "cat": "miss", "text": "Ничем не занят, обижаюсь и скучаю по любимой женщине", "link": ""}]}, {"date": "2026-10-09", "load": 50, "note": "", "slots": [{"busy": true, "cat": "sleep", "text": "Сплю после тяжёлого четверга", "link": ""}, {"busy": false, "cat": "rest", "text": "12:30–15:00 отдыхаю, чай пью, ничего не делаю", "link": ""}, {"busy": true, "cat": "study", "text": "Университет, я студент (почти дипломированный), до 18:10", "link": ""}, {"busy": false, "cat": "miss", "text": "Ничем не занят, скучаю по самой любимой женщине", "link": ""}]}, {"date": "2026-10-10", "load": 50, "note": "", "slots": [{"busy": true, "cat": "sleep", "text": "Сплю после тяжёлой пятницы", "link": ""}, {"busy": false, "cat": "clinic", "text": "Тусуюсь в клинике с 13:00 до 14/15:00", "link": ""}, {"busy": true, "cat": "cook", "text": "Готовлю что-то на ужин САМ (кукинг)", "link": "https://imgur.com/a/3y1zVYs"}, {"busy": false, "cat": "miss", "text": "Скорее всего ничем не занят, возможно всё ещё скучаю. После 21:00 возможны форс-мажорные дела", "link": ""}]}, {"date": "2026-10-11", "load": 25, "note": "", "slots": [{"busy": true, "cat": "sleep", "text": "Сплю после тяжёлой субботы", "link": ""}, {"busy": false, "cat": "together", "text": "Живу совместную жизнь", "link": ""}, {"busy": false, "cat": "together", "text": "Живу совместную жизнь", "link": ""}, {"busy": false, "cat": "together", "text": "Живу совместную жизнь", "link": ""}]}]}</script>
+<script>
+(function(){
+"use strict";
+var DATA = JSON.parse(document.getElementById("plan-data").textContent);
+var CFG = window.GDE_CONFIG || {};
+var TG_ON = !!(CFG.botToken && CFG.chatId);
+var SLOT_T = [[480,720],[720,960],[960,1200],[1200,1440]];
+var CATS = {
+  sleep:{label:"Сон",now:"Спит",color:"var(--c-sleep)"},
+  rest:{label:"Отдых",now:"Пьёт чай и отдыхает",color:"var(--c-rest)"},
+  study:{label:"Универ",now:"На парах",color:"var(--c-study)"},
+  miss:{label:"Скучает",now:"Свободен и скучает",color:"var(--c-miss)"},
+  cook:{label:"Кукинг",now:"Готовит ужин сам",color:"var(--c-cook)"},
+  clinic:{label:"Клиника",now:"Тусуется в клинике",color:"var(--c-clinic)"},
+  together:{label:"Вместе",now:"Живёт совместную жизнь",color:"var(--c-together)"},
+  unknown:{label:"Не расписано",now:"Не расписано",color:"var(--c-unknown)"}
+};
+var DOW = ["Воскресенье","Понедельник","Вторник","Среда","Четверг","Пятница","Суббота"];
+var DOW_S = ["Вс","Пн","Вт","Ср","Чт","Пт","Сб"];
+var DOW_ACC = ["в воскресенье","в понедельник","во вторник","в среду","в четверг","в пятницу","в субботу"];
+var MON = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+
+var state = { sel:null, edit:false, draft:null, modal:null, intent:0, sending:false };
+function sentKey(date, si){ return date + "#" + si; }
+function loadSent(){ try { return JSON.parse(localStorage.getItem("gde-artur-sent") || "{}"); } catch (e){ return {}; } }
+function markSent(date, si, intent){ var m = loadSent(); m[sentKey(date, si)] = intent; try { localStorage.setItem("gde-artur-sent", JSON.stringify(m)); } catch (e){} }
+
+function el(tag, attrs, kids){
+  var e = document.createElement(tag);
+  if (attrs) for (var k in attrs){
+    var v = attrs[k];
+    if (v == null || v === false) continue;
+    if (k === "class") e.className = v;
+    else if (k === "text") e.textContent = v;
+    else if (k === "style") e.setAttribute("style", v);
+    else if (k.slice(0,2) === "on") e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v === true ? "" : v);
+  }
+  (kids || []).forEach(function(c){ if (c == null || c === false) return; e.appendChild(typeof c === "string" ? document.createTextNode(c) : c); });
+  return e;
+}
+function pad(n){ return (n < 10 ? "0" : "") + n; }
+function hm(min){ min = ((min % 1440) + 1440) % 1440; return pad(Math.floor(min/60)) + ":" + pad(min % 60); }
+function hmEnd(min){ return min === 1440 ? "00:00" : hm(min); }
+function parseD(s){ var p = s.split("-"); return Date.UTC(+p[0], +p[1]-1, +p[2]); }
+function dInfo(s){ var t = new Date(parseD(s)); return { dow:t.getUTCDay(), d:t.getUTCDate(), m:t.getUTCMonth() }; }
+function ddmm(s){ var i = dInfo(s); return pad(i.d) + "." + pad(i.m+1); }
+function plan(){ return state.edit ? state.draft : DATA; }
+
+function nowMinsk(){
+  var parts = {};
+  new Intl.DateTimeFormat("en-CA",{timeZone:DATA.tz||"Europe/Minsk",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"})
+    .formatToParts(new Date()).forEach(function(p){ parts[p.type] = p.value; });
+  var h = +parts.hour; if (h === 24) h = 0;
+  return { date: parts.year + "-" + parts.month + "-" + parts.day, min: h*60 + (+parts.minute) };
+}
+function dayIndex(dateStr){ return Math.round((parseD(dateStr) - parseD(plan().days[0].date)) / 864e5); }
+function nowAbs(){ var n = nowMinsk(); return { abs: dayIndex(n.date)*1440 + n.min, di: dayIndex(n.date), min: n.min, date: n.date }; }
+
+function dur(m){
+  m = Math.max(0, Math.round(m));
+  var d = Math.floor(m/1440), h = Math.floor((m%1440)/60), mm = m%60, out = [];
+  if (d) out.push(d + " д");
+  if (h) out.push(h + " ч");
+  if (!d && mm) out.push(mm + " мин");
+  return out.length ? out.join(" ") : "меньше минуты";
+}
+function slotAt(abs){
+  var di = Math.floor(abs/1440), min = abs - di*1440, days = plan().days;
+  if (di < 0 || di >= days.length) return null;
+  for (var i = 0; i < 4; i++) if (min >= SLOT_T[i][0] && min < SLOT_T[i][1]) return { di:di, si:i };
+  return { di:di, si:-1 };
+}
+function S(di, si){ return plan().days[di].slots[si]; }
+function nextFree(abs){
+  var days = plan().days;
+  for (var di = 0; di < days.length; di++) for (var si = 0; si < 4; si++){
+    var start = di*1440 + SLOT_T[si][0];
+    if (start > abs && days[di].slots[si].busy === false) return { di:di, si:si, start:start, end:freeEnd(di, si) };
+  }
+  return null;
+}
+function freeEnd(di, si){
+  var j = si; while (j + 1 < 4 && plan().days[di].slots[j+1].busy === false) j++;
+  return di*1440 + SLOT_T[j][1];
+}
+function whenLabel(di, si, nowDi){
+  var day = plan().days[di], info = dInfo(day.date);
+  var pre = di === nowDi ? "Сегодня" : di === nowDi + 1 ? "Завтра" : DOW[info.dow];
+  return pre + ", " + hm(SLOT_T[si][0]) + "–" + hmEnd(SLOT_T[si][1]);
+}
+
+/* ---------- stats ---------- */
+function stats(){
+  var free = 0, filled = 0, miss = 0, together = 0, eveFree = 0, eveAll = 0, uni = 0;
+  plan().days.forEach(function(d){
+    d.slots.forEach(function(s, i){
+      if (s.busy === null) return;
+      filled++;
+      if (!s.busy) free += 4;
+      if (/скуча/i.test(s.text)) miss++;
+      if (s.cat === "together") together += 4;
+      if (s.cat === "study") uni++;
+      if (i === 3){ eveAll++; if (!s.busy) eveFree++; }
+    });
+  });
+  return { free:free, total:filled*4, miss:miss, together:together, eveFree:eveFree, eveAll:eveAll, uni:uni };
+}
+
+/* ---------- render ---------- */
+function render(){
+  var oldScrim = document.querySelector(".scrim"); if (oldScrim) oldScrim.remove();
+  var root = document.getElementById("root");
+  var keepScroll = window.scrollY;
+  root.textContent = "";
+  var P = plan(), days = P.days, N = nowAbs();
+  if (state.sel == null) state.sel = (N.di >= 0 && N.di < days.length) ? N.di : (N.di < 0 ? 0 : days.length - 1);
+  var first = dInfo(days[0].date), last = dInfo(days[days.length-1].date);
+  var range = first.m === last.m ? first.d + "–" + last.d + " " + MON[first.m] : first.d + " " + MON[first.m] + " – " + last.d + " " + MON[last.m];
+
+  root.appendChild(el("header",{class:"top"},[
+    el("div",null,[
+      el("div",{class:"eyebrow"},["Для ", el("b",{text:"Александры Занятой"}), " · неделя " + range]),
+      el("h1",null,["Где Артур", el("span",{class:"q",text:"?"})])
+    ]),
+  ]));
+
+  root.appendChild(hero(N));
+  root.appendChild(statsBlock());
+  root.appendChild(weekBlock(N));
+  root.appendChild(dayBlock(N));
+  if (state.edit) root.appendChild(editBar());
+  root.appendChild(el("footer",null,[
+    el("span",{text:"Время минское. Расписание составляет Артур лично, претензии принимаются в любое свободное окно."}),
+    el("span",{class:"mono",text:"обновляется само каждые 30 сек"})
+  ]));
+  if (state.modal) document.body.appendChild(modal());
+  window.scrollTo(0, keepScroll);
+  var gb = root.querySelector(".gridbox"), tc = root.querySelector(".wh.today");
+  if (gb && tc && gb.scrollWidth > gb.clientWidth) gb.scrollLeft = Math.max(0, tc.offsetLeft - 60);
+}
+
+function hero(N){
+  var days = plan().days, at = slotAt(N.abs), nf = nextFree(N.abs);
+  var cat = "unknown", busy = null, title, quote = "", when = "", badge = "", now = null;
+  var nowTxt = DOW[dInfo(N.date).dow] + ", " + ddmm(N.date) + " · " + hm(N.min) + " по Минску";
+  if (N.di < 0){ title = "Неделя ещё не началась"; quote = "Расписание стартует в понедельник."; }
+  else if (N.di >= days.length){ title = "Эта неделя закончилась"; quote = "Ждём от Артура расписание на новую."; }
+  else if (at.si === -1){ cat = "sleep"; busy = true; title = "Ночь. Скорее всего, спит"; quote = "До 08:00 расписание молчит. Можно написать, ответит утром."; }
+  else {
+    var s = S(at.di, at.si); now = at; cat = s.cat; busy = s.busy;
+    title = CATS[cat].now;
+    quote = s.text || "Этот кусок дня Артур пока не расписал.";
+    if (busy === false){
+      var end = freeEnd(at.di, at.si);
+      when = "Свободен ещё " + dur(end - N.abs) + " (до " + hmEnd(end - at.di*1440) + ")";
+    } else if (busy === true && nf){
+      when = "Освободится через " + dur(nf.start - N.abs);
+    }
+  }
+  badge = busy === false ? "Свободен, можно писать" : busy === true ? "Занят" : "Без плана";
+  var box = el("section",{class:"hero" + (busy === true ? " busy" : ""),style:"--hero:" + CATS[cat].color,"aria-live":"polite"},[
+    el("div",null,[
+      el("div",{class:"live"},[el("span",{class:"dot"}), nowTxt]),
+      el("div",{class:"state",text:title}),
+      el("span",{class:"badge",text:badge}),
+      el("p",{class:"quote",text:quote}),
+      when ? el("div",{class:"when",text:when}) : null
+    ]),
+    busy === false && now ? el("div",{class:"next"},[
+      el("div",{class:"lbl",text:"Прямо сейчас"}),
+      el("div",{class:"big",text:"Окно открыто"}),
+      el("div",{class:"sub",text:"Самое время занять Артура собой."}),
+      el("button",{class:"btn",type:"button",onclick:function(){ openModal(now.di, now.si); },text:"Забронировать"})
+    ]) : nf ? el("div",{class:"next"},[
+      el("div",{class:"lbl",text:"Ближайшее свободное окно"}),
+      el("div",{class:"big",text:whenLabel(nf.di, nf.si, N.di)}),
+      el("div",{class:"sub",text:"через " + dur(nf.start - N.abs) + " · " + CATS[S(nf.di,nf.si).cat].label.toLowerCase()}),
+      el("button",{class:"btn",type:"button",onclick:function(){ openModal(nf.di, nf.si); },text:"Забронировать окно"})
+    ]) : el("div",{class:"next"},[
+      el("div",{class:"lbl",text:"Свободные окна"}),
+      el("div",{class:"big",text:"На этой неделе больше нет"}),
+      el("div",{class:"sub",text:"Но можно попробовать отвлечь."})
+    ])
+  ]);
+  return box;
+}
+
+function statsBlock(){
+  var s = stats();
+  function tile(n, unit, t, pct){
+    return el("div",{class:"stat"},[
+      el("div",{class:"n"},[String(n), unit ? el("small",{text:unit}) : null]),
+      el("div",{class:"t",text:t}),
+      pct != null ? el("div",{class:"meter"},[el("i",{style:"width:" + Math.round(pct) + "%"})]) : null
+    ]);
+  }
+  return el("section",{class:"stats","aria-label":"Сводка недели"},[
+    tile(s.free, "ч", "свободно из " + s.total + " расписанных", s.total ? s.free/s.total*100 : 0),
+    tile(s.eveFree + "/" + s.eveAll, "", "вечеров свободны (20:00–00:00)", s.eveAll ? s.eveFree/s.eveAll*100 : 0),
+    tile(s.miss, "раза", "письменно признался, что скучает", null),
+    tile(s.together, "ч", "совместной жизни в планах", null)
+  ]);
+}
+
+function weekBlock(N){
+  var days = plan().days, SENT = loadSent();
+  var grid = el("div",{class:"week","aria-label":"Сетка недели"});
+  grid.appendChild(el("div"));
+  days.forEach(function(d, di){
+    var i = dInfo(d.date);
+    grid.appendChild(el("button",{type:"button",class:"wh" + (di === N.di ? " today" : "") + (di === state.sel ? " sel" : ""),onclick:function(){ selectDay(di); },"aria-label":DOW[i.dow] + " " + ddmm(d.date)},[
+      el("span",{class:"d",text:DOW_S[i.dow]}),
+      el("span",{class:"dt",text:ddmm(d.date)}),
+      el("span",{class:"ld",title:d.load != null ? "Занятость " + d.load + "%" : "Занятость не указана"},[el("i",{style:"width:" + (d.load || 0) + "%"})])
+    ]));
+  });
+  for (var si = 0; si < 4; si++){
+    grid.appendChild(el("div",{class:"tl",text:hm(SLOT_T[si][0])}));
+    days.forEach(function(d, di){
+      var s = d.slots[si], unk = s.busy === null, idx = si;
+      var start = di*1440 + SLOT_T[si][0], end = di*1440 + SLOT_T[si][1];
+      var isNow = N.abs >= start && N.abs < end, past = N.abs >= end;
+      grid.appendChild(el("button",{type:"button",
+        class:"cell" + (unk ? " unk" : s.busy ? " busy" : "") + (isNow ? " now" : "") + (past && !isNow ? " past" : ""),
+        style:"--cc:" + CATS[s.cat].color,
+        title:(s.text || "Не расписано"),
+        onclick:function(){ selectDay(di, idx); }},[
+        el("span",{class:"cl",text:unk ? "пусто" : CATS[s.cat].label}),
+        el("span",{class:"cs",text:unk ? "—" : SENT[sentKey(d.date, idx)] ? "твоя бронь" : s.busy ? "занят" : "свободен"})
+      ]));
+    });
+  }
+  var legend = el("div",{class:"legend"});
+  Object.keys(CATS).forEach(function(k){
+    legend.appendChild(el("span",null,[el("i",{class:k === "unknown" ? "u" : "",style:"--cc:" + CATS[k].color}), CATS[k].label]));
+  });
+  legend.appendChild(el("span",null,[el("i",{class:"s"}), "штриховка = занят"]));
+  return el("section",{class:"sec"},[
+    el("div",{class:"sec-h"},[el("h2",{text:"Неделя целиком"}), el("span",{class:"hint",text:"Нажми на клетку, чтобы открыть день. Полоска под датой = степень занятости по версии Артура."})]),
+    el("div",{class:"gridbox"},[grid]),
+    legend
+  ]);
+}
+
+function dayBlock(N){
+  var days = plan().days, di = state.sel, d = days[di], info = dInfo(d.date), SENT = loadSent();
+  var tabs = el("div",{class:"tabs",role:"tablist"});
+  days.forEach(function(x, i){
+    var inf = dInfo(x.date);
+    tabs.appendChild(el("button",{type:"button",role:"tab",class:"tab" + (i === N.di ? " today" : ""),"aria-selected":i === di ? "true" : "false",onclick:function(){ selectDay(i); },text:DOW_S[inf.dow] + " " + ddmm(x.date)}));
+  });
+
+  var head;
+  if (state.edit){
+    head = el("div",{class:"dayhead"},[
+      el("h3",{text:DOW[info.dow] + ", " + info.d + " " + MON[info.m]}),
+      el("div",{class:"ed dayedit"},[
+        el("label",null,["Подпись дня", el("input",{id:"ed-note-" + di,type:"text",value:d.note || "",placeholder:"например: та самая тяжёлая среда",oninput:function(e){ d.note = e.target.value; }})]),
+        el("label",null,["Занятость, %", el("input",{id:"ed-load-" + di,type:"number",min:"0",max:"100",step:"5",value:d.load == null ? "" : String(d.load),oninput:function(e){ var v = e.target.value; d.load = v === "" ? null : Math.max(0, Math.min(100, +v)); }})])
+      ])
+    ]);
+  } else {
+    head = el("div",{class:"dayhead"},[
+      el("div",null,[
+        el("h3",{text:DOW[info.dow] + ", " + info.d + " " + MON[info.m]}),
+        d.note ? el("div",{class:"note",text:d.note}) : null
+      ]),
+      el("div",{class:"load"},[
+        el("div",{class:"row"},[el("span",{text:"Степень занятости"}), el("span",{class:"mono",text:d.load != null ? d.load + "%" : "не указана"})]),
+        el("div",{class:"meter"},[el("i",{style:"width:" + (d.load || 0) + "%"})])
+      ])
+    ]);
+  }
+
+  var slots = el("div",{class:"slots"});
+  d.slots.forEach(function(s, si){
+    var start = di*1440 + SLOT_T[si][0], end = di*1440 + SLOT_T[si][1];
+    var isNow = N.abs >= start && N.abs < end, unk = s.busy === null;
+    var inner;
+    if (state.edit){
+      inner = el("div",{class:"in ed"},[
+        el("div",{class:"tm"},[el("span",{class:"mono",text:hm(SLOT_T[si][0]) + "–" + hmEnd(SLOT_T[si][1])})]),
+        el("div",{class:"two"},[
+          el("label",null,["Статус", selectEl("ed-busy-" + di + "-" + si, [["busy","Занят"],["free","Свободен"],["unk","Не расписано"]], s.busy === true ? "busy" : s.busy === false ? "free" : "unk", function(v){ s.busy = v === "busy" ? true : v === "free" ? false : null; if (v === "unk") s.cat = "unknown"; else if (s.cat === "unknown") s.cat = v === "busy" ? "study" : "rest"; render(); })]),
+          el("label",null,["Чем занят", selectEl("ed-cat-" + di + "-" + si, Object.keys(CATS).map(function(k){ return [k, CATS[k].label]; }), s.cat, function(v){ s.cat = v; if (v === "unknown") s.busy = null; render(); })])
+        ]),
+        el("label",null,["Описание", el("input",{id:"ed-text-" + di + "-" + si,type:"text",value:s.text,placeholder:"что происходит в это время",oninput:function(e){ s.text = e.target.value; }})]),
+        el("label",null,["Ссылка (необязательно)", el("input",{id:"ed-link-" + di + "-" + si,type:"url",value:s.link || "",placeholder:"https://…",oninput:function(e){ s.link = e.target.value.trim(); }})])
+      ]);
+    } else {
+      inner = el("div",{class:"in"},[
+        el("div",{class:"tm"},[
+          el("span",{class:"mono",text:hm(SLOT_T[si][0]) + "–" + hmEnd(SLOT_T[si][1])}),
+          el("span",{class:"chip" + (unk ? " unk" : ""),style:"--cc:" + CATS[s.cat].color,text:CATS[s.cat].label}),
+          unk ? null : el("span",{class:"chip st" + (s.busy ? "" : " free"),text:s.busy ? "занят" : "свободен"}),
+          isNow ? el("span",{class:"chip st",text:"сейчас"}) : null,
+          SENT[sentKey(d.date, si)] ? el("span",{class:"chip mine",text:"твоя бронь: " + SENT[sentKey(d.date, si)].toLowerCase()}) : null
+        ]),
+        el("p",{text:s.text || "Артур ещё не расписал это время."}),
+        s.link && /^https?:\/\//.test(s.link) ? el("a",{href:s.link,target:"_blank",rel:"noopener",text:"Пример на фото →"}) : null,
+        unk || N.abs >= end ? null : el("div",{class:"acts"},[
+          el("button",{type:"button",class:"btn small " + (s.busy ? "ghost" : "pink"),onclick:function(){ openModal(di, si); },text:s.busy ? "Отвлечь всё равно" : SENT[sentKey(d.date, si)] ? "Забронировать ещё раз" : "Забронировать"})
+        ])
+      ]);
+    }
+    slots.appendChild(el("article",{class:"slot" + (s.busy ? " busy" : "") + (unk ? " unk" : "") + (isNow && !state.edit ? " now" : ""),id:"slot-" + si,style:"--cc:" + CATS[s.cat].color},[el("div",{class:"bar"}), inner]));
+  });
+
+  return el("section",{class:"sec",id:"day"},[
+    el("div",{class:"sec-h"},[el("h2",{text:"По дням"}), el("span",{class:"hint",text:state.edit ? "Режим редактирования: поменяй планы и скопируй plan.json." : TG_ON ? "Свободное окно можно забронировать: Артур сразу получит сообщение в Telegram." : "Свободное окно можно забронировать: соберу сообщение, останется отправить Артуру."})]),
+    tabs, head, slots
+  ]);
+}
+
+function selectEl(id, opts, val, on){
+  var s = el("select",{id:id,onchange:function(e){ on(e.target.value); }});
+  opts.forEach(function(o){ var op = el("option",{value:o[0],text:o[1]}); if (o[0] === val) op.selected = true; s.appendChild(op); });
+  return s;
+}
+
+function selectDay(di, si){
+  state.sel = di; render();
+  var target = document.getElementById(si != null ? "slot-" + si : "day");
+  if (target) target.scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: si != null ? "center" : "start"});
+}
+
+/* ---------- booking modal ---------- */
+var INTENTS_FREE = [
+  ["Созвон","давай созвонимся"],
+  ["Прогулка","пойдём гулять"],
+  ["Приезжай","приезжай ко мне"],
+  ["Поболтать","просто поболтаем"],
+  ["Сюрприз","у меня для тебя сюрприз, подробности потом"]
+];
+var INTENTS_BUSY = [
+  ["Срочно","это срочно"],
+  ["Соскучилась","я соскучилась, ответь, когда сможешь"],
+  ["На минутку","мне нужна всего минутка"]
+];
+function openModal(di, si){ state.modal = { di:di, si:si }; state.intent = 0; render(); var t = document.getElementById("msg-text"); if (t) t.focus(); }
+function closeModal(){ state.modal = null; var m = document.querySelector(".scrim"); if (m) m.remove(); render(); }
+function buildMsg(){
+  var m = state.modal, d = plan().days[m.di], s = d.slots[m.si], i = dInfo(d.date);
+  var when = DOW_ACC[i.dow] + " (" + ddmm(d.date) + ") с " + hm(SLOT_T[m.si][0]) + " до " + hmEnd(SLOT_T[m.si][1]);
+  var list = s.busy ? INTENTS_BUSY : INTENTS_FREE, it = list[state.intent] || list[0];
+  if (s.busy) return "Артур, знаю, что " + when + " у тебя «" + CATS[s.cat].label.toLowerCase() + "», но " + it[1] + ".";
+  return "Артур, бронирую тебя " + when + ": " + it[1] + ". Окно по твоему же расписанию свободно, так что без отговорок.";
+}
+function modal(){
+  var m = state.modal, d = plan().days[m.di], s = d.slots[m.si], i = dInfo(d.date);
+  var list = s.busy ? INTENTS_BUSY : INTENTS_FREE;
+  var opts = el("div",{class:"opts"});
+  list.forEach(function(o, k){
+    opts.appendChild(el("button",{type:"button",class:"opt","aria-pressed":k === state.intent ? "true" : "false",onclick:function(){ state.intent = k; document.getElementById("msg-text").value = buildMsg(); opts.querySelectorAll(".opt").forEach(function(b, j){ b.setAttribute("aria-pressed", j === k ? "true" : "false"); }); },text:o[0]}));
+  });
+  var ta = el("textarea",{id:"msg-text","aria-label":"Текст сообщения"});
+  ta.value = buildMsg();
+  var scrim = el("div",{class:"scrim",onclick:function(e){ if (e.target === scrim) closeModal(); }},[
+    el("div",{class:"modal",role:"dialog","aria-modal":"true","aria-labelledby":"m-title"},[
+      el("h4",{id:"m-title",text:(s.busy ? "Отвлечь Артура: " : "Бронь: ") + DOW[i.dow].toLowerCase() + ", " + hm(SLOT_T[m.si][0]) + "–" + hmEnd(SLOT_T[m.si][1])}),
+      el("p",{class:"sub",text:s.busy ? "Он занят, но для тебя исключение возможно. Выбери повод:" : "Выбери, на что бронируешь. Текст можно поправить."}),
+      opts, ta,
+      el("p",{class:"hint",text:TG_ON ? "Сообщение уйдёт Артуру в Telegram прямо отсюда." : "Скопируй и отправь Артуру в любимый мессенджер."}),
+      el("div",{class:"row"},[
+        el("button",{type:"button",class:"btn ghost",onclick:closeModal,text:"Закрыть"}),
+        TG_ON ? el("button",{type:"button",class:"btn ghost",onclick:copyMsg,text:"Скопировать"}) : null,
+        TG_ON ? el("button",{type:"button",class:"btn pink",id:"send-btn",onclick:sendTg,text:"Отправить Артуру"}) : el("button",{type:"button",class:"btn pink",onclick:copyMsg,text:"Скопировать сообщение"})
+      ])
+    ])
+  ]);
+  return scrim;
+}
+function copyMsg(){
+  var ta = document.getElementById("msg-text"), txt = ta.value;
+  function fallback(){ ta.focus(); ta.select(); toast("Текст выделен, нажми «Копировать»"); }
+  try {
+    navigator.clipboard.writeText(txt).then(function(){ toast("Скопировано. Отправляй Артуру"); }, fallback);
+  } catch (e){ fallback(); }
+}
+function toast(t){
+  var old = document.querySelector(".toast"); if (old) old.remove();
+  var x = el("div",{class:"toast",role:"status",text:t}); document.body.appendChild(x);
+  setTimeout(function(){ x.remove(); }, 2600);
+}
+document.addEventListener("keydown", function(e){ if (e.key === "Escape" && state.modal) closeModal(); });
+
+/* ---------- Telegram ---------- */
+var lastSend = 0;
+function tgUrl(token, method){ return "https://api.telegram.org/bot" + encodeURIComponent(token).replace(/%3A/gi, ":") + "/" + method; }
+function sendTg(){
+  if (state.sending) return;
+  if (Date.now() - lastSend < 15000){ toast("Подожди пару секунд перед следующей отправкой"); return; }
+  var m = state.modal, d = plan().days[m.di], s = d.slots[m.si], i = dInfo(d.date);
+  var list = s.busy ? INTENTS_BUSY : INTENTS_FREE, it = list[state.intent] || list[0];
+  var txt = document.getElementById("msg-text").value.trim();
+  if (!txt){ toast("Напиши хоть пару слов"); return; }
+  var head = (s.busy ? "Саша хочет тебя отвлечь" : "Новая бронь от Саши") + "\n" +
+    DOW[i.dow] + ", " + ddmm(d.date) + ", " + hm(SLOT_T[m.si][0]) + "–" + hmEnd(SLOT_T[m.si][1]) + "\n" +
+    "Слот: " + CATS[s.cat].label + (s.busy ? " (занят)" : " (свободен)") + "\n" +
+    "Повод: " + it[0];
+  var btn = document.getElementById("send-btn");
+  state.sending = true;
+  if (btn){ btn.disabled = true; btn.textContent = "Отправляю…"; }
+  var body = new URLSearchParams();
+  body.set("chat_id", String(CFG.chatId));
+  body.set("text", head + "\n\n" + txt);
+  fetch(tgUrl(CFG.botToken, "sendMessage"), { method:"POST", body: body })
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if (!j || !j.ok) throw new Error((j && j.description) || "send failed");
+      lastSend = Date.now(); state.sending = false;
+      markSent(d.date, m.si, it[0]);
+      state.modal = null; render();
+      toast("Отправлено! Артур уже получил сообщение");
+    })
+    .catch(function(){
+      state.sending = false;
+      if (btn){ btn.disabled = false; btn.textContent = "Отправить Артуру"; }
+      toast("Не получилось отправить. Скопируй текст и отправь сама");
+    });
+}
+
+/* ---------- edit mode (#edit): change plans, copy plan.json ---------- */
+function startEdit(){ state.edit = true; state.draft = JSON.parse(JSON.stringify(DATA)); state.sel = null; render(); }
+function exitEdit(){ state.edit = false; state.draft = null; if (location.hash === "#edit") history.replaceState(null, "", location.pathname + location.search); render(); }
+function shiftWeek(){
+  state.draft.days.forEach(function(d){
+    var t = new Date(parseD(d.date) + 7*864e5);
+    d.date = t.getUTCFullYear() + "-" + pad(t.getUTCMonth()+1) + "-" + pad(t.getUTCDate());
+  });
+  state.sel = 0; render(); toast("Даты сдвинуты на неделю вперёд. Поправь планы");
+}
+function copyText(txt, okMsg){
+  function fallback(){
+    var ta = el("textarea",{style:"position:fixed;left:-9999px;top:0"}); ta.value = txt; document.body.appendChild(ta); ta.select();
+    var ok = false; try { ok = document.execCommand("copy"); } catch (e){}
+    ta.remove(); toast(ok ? okMsg : "Не удалось скопировать автоматически");
+  }
+  try { navigator.clipboard.writeText(txt).then(function(){ toast(okMsg); }, fallback); } catch (e){ fallback(); }
+}
+function copyPlan(){ copyText(JSON.stringify(state.draft, null, 2) + "\n", "plan.json скопирован. Вставь его в файл на GitHub"); }
+function editBar(){
+  return el("div",{class:"editbar"},[
+    el("span",{style:"font-weight:800",text:"Редактирование недели"}),
+    el("div",{style:"display:flex;flex-wrap:wrap;gap:8px"},[
+      el("button",{type:"button",class:"btn ghost small",onclick:shiftWeek,text:"Сдвинуть на след. неделю"}),
+      el("button",{type:"button",class:"btn ghost small",onclick:exitEdit,text:"Выйти"}),
+      el("button",{type:"button",class:"btn pink small",onclick:copyPlan,text:"Скопировать plan.json"})
+    ])
+  ]);
+}
+
+/* ---------- setup mode (#setup): find chat id, build config.js ---------- */
+var setup = { token:"", chats:null, chat:null, busy:false, msg:"" };
+function configText(){
+  return "window.GDE_CONFIG = {\n  botToken: \"" + setup.token + "\",\n  chatId: \"" + (setup.chat ? setup.chat.id : "") + "\"\n};\n";
+}
+function findChats(){
+  setup.token = document.getElementById("setup-token").value.trim();
+  if (!/^\d+:[\w-]{20,}$/.test(setup.token)){ setup.msg = "Похоже, это не токен. Он выглядит так: 123456789:AA…"; renderSetup(); return; }
+  setup.busy = true; setup.msg = ""; renderSetup();
+  fetch(tgUrl(setup.token, "getUpdates"))
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      setup.busy = false;
+      if (!j.ok){ setup.msg = "Telegram не принял токен: " + (j.description || "ошибка"); renderSetup(); return; }
+      var seen = {}, out = [];
+      (j.result || []).forEach(function(u){
+        var msg = u.message || u.edited_message || u.channel_post; if (!msg || !msg.chat) return;
+        var c = msg.chat; if (seen[c.id]) return; seen[c.id] = 1;
+        out.push({ id:c.id, name:[c.first_name, c.last_name].filter(Boolean).join(" ") || c.title || c.username || "Чат", user:c.username || "" });
+      });
+      setup.chats = out;
+      if (!out.length) setup.msg = "Бот пока не видел ни одного сообщения. Открой бота в Telegram, нажми Start или напиши ему что угодно, потом нажми «Найти чат» ещё раз.";
+      renderSetup();
+    })
+    .catch(function(){ setup.busy = false; setup.msg = "Не удалось связаться с Telegram. Проверь интернет и попробуй снова."; renderSetup(); });
+}
+function testSend(){
+  var body = new URLSearchParams(); body.set("chat_id", String(setup.chat.id)); body.set("text", "Проверка связи: брони с сайта «Где Артур?» будут приходить сюда.");
+  fetch(tgUrl(setup.token, "sendMessage"), { method:"POST", body: body }).then(function(r){ return r.json(); })
+    .then(function(j){ toast(j.ok ? "Тестовое сообщение отправлено, проверь Telegram" : "Ошибка: " + j.description); })
+    .catch(function(){ toast("Не удалось отправить тест"); });
+}
+function renderSetup(){
+  var root = document.getElementById("root");
+  var keep = document.getElementById("setup-token"), tokenVal = keep ? keep.value : setup.token;
+  root.textContent = "";
+  var box = el("div",{class:"setup"},[
+    el("div",null,[el("div",{class:"eyebrow",text:"Только для Артура"}), el("h1",{style:"font-size:clamp(36px,7vw,64px)"},["Настройка ", el("span",{style:"color:var(--accent)",text:"Telegram"})])]),
+    el("div",{class:"card"},[
+      el("h2",{text:"1. Создай бота"}),
+      el("ol",null,[
+        el("li",{text:"В Telegram открой @BotFather и отправь /newbot."}),
+        el("li",{text:"Придумай имя и username бота (должен заканчиваться на bot)."}),
+        el("li",{text:"BotFather пришлёт токен вида 123456789:AA…. Скопируй его."}),
+        el("li",{text:"Открой своего нового бота и нажми Start, чтобы он мог тебе писать."})
+      ])
+    ]),
+    el("div",{class:"card"},[
+      el("h2",{text:"2. Найди свой чат"}),
+      el("input",{id:"setup-token",type:"text",autocomplete:"off",spellcheck:"false",placeholder:"токен от BotFather",value:tokenVal}),
+      el("div",null,[el("button",{type:"button",class:"btn pink",onclick:findChats,disabled:setup.busy,text:setup.busy ? "Ищу…" : "Найти чат"})]),
+      setup.msg ? el("p",{class:"hint",text:setup.msg}) : null,
+      setup.chats && setup.chats.length ? el("div",{style:"display:grid;gap:8px"}, setup.chats.map(function(c){
+        return el("div",{class:"chatrow"},[
+          el("span",null,[el("b",{text:c.name}), c.user ? " @" + c.user : "", el("span",{class:"mono hint",text:"  id " + c.id})]),
+          el("button",{type:"button",class:"btn small" + (setup.chat && setup.chat.id === c.id ? " pink" : " ghost"),onclick:function(){ setup.chat = c; setup.token = document.getElementById("setup-token").value.trim(); renderSetup(); },text:setup.chat && setup.chat.id === c.id ? "Выбран" : "Это я"})
+        ]);
+      })) : null
+    ]),
+    setup.chat ? el("div",{class:"card"},[
+      el("h2",{text:"3. Готовый config.js"}),
+      el("p",{class:"hint",text:"Замени этим содержимое файла config.js в репозитории на GitHub. Через минуту кнопка «Отправить Артуру» заработает."}),
+      el("pre",{text:configText()}),
+      el("div",{style:"display:flex;flex-wrap:wrap;gap:8px"},[
+        el("button",{type:"button",class:"btn pink",onclick:function(){ copyText(configText(), "config.js скопирован"); },text:"Скопировать config.js"}),
+        el("button",{type:"button",class:"btn ghost",onclick:testSend,text:"Отправить тест себе"})
+      ])
+    ]) : null,
+    el("p",{class:"hint"},["Статус сейчас: ", el("b",{text:TG_ON ? "Telegram подключён, брони приходят." : "Telegram ещё не подключён, Саша может только копировать текст."})]),
+    el("div",null,[el("a",{class:"btn ghost",href:location.pathname,text:"← К расписанию"})])
+  ]);
+  root.appendChild(box);
+}
+
+/* ---------- boot ---------- */
+var MODE = "main";
+var baseRender = render;
+render = function(){ if (MODE === "setup") return renderSetup(); baseRender(); };
+function applyHash(){
+  var h = location.hash;
+  MODE = h === "#setup" ? "setup" : "main";
+  if (h === "#edit"){ if (!state.edit) { startEdit(); return; } }
+  else if (state.edit){ state.edit = false; state.draft = null; }
+  render();
+}
+window.addEventListener("hashchange", applyHash);
+applyHash();
+setInterval(function(){ if (MODE === "main" && !state.edit && !state.modal) render(); }, 30000);
+
+fetch("plan.json", { cache:"no-store" })
+  .then(function(r){ return r.ok ? r.json() : null; })
+  .then(function(j){
+    if (!j || !j.days || !j.days.length) return;
+    DATA = j;
+    if (!state.edit && MODE === "main" && !state.modal){ state.sel = null; render(); }
+  })
+  .catch(function(){});
+})();
+</script>
+</body>
+</html>
