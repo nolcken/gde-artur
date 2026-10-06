@@ -1,4 +1,3 @@
 window.GDE_CONFIG = {
-  botToken: "8863554108:AAGFefu1sXoqV0BO_Ve-XLu7GVqqaFx2Glc",
-  chatId: "900486737"
+  api: "https://script.google.com/macros/s/AKfycbwtw_Ogs0YHVauz6O0QuoZX_DyVN-3r-79qL2ax4v6qP0gaEUgAdZmSvsLgM_G_htmJ/exec"
 };
