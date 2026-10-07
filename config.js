@@ -3,5 +3,5 @@ window.GDE_CONFIG = {
   playlist: "https://music.yandex.ru/iframe/playlist/arturvengura/1041",
   playlistTitle: "влюблен",
   playlistLink: "https://music.yandex.ru/playlists/2ea22982-fdae-534a-9793-26d5bd7bf002",
-  playlistHeight: 450
+  playlistHeight: 130
 };

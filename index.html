@@ -199,11 +199,19 @@ h2{font-family:var(--f-display);font-weight:700;font-size:22px;margin:0;letter-s
 .err{color:var(--bad);font-weight:700;font-size:13.5px;margin:0}
 
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:700;font-size:14px;z-index:30;max-width:calc(100% - 32px);text-align:center}
-.music-wrap{padding-block:0 28px}
+.top-wrap{padding-block:24px 0}
+.top-wrap:empty{display:none}
+.music-wrap{padding-block:28px 0}
+.root-wrap{padding-block:28px 64px}
 .foot-wrap{padding-block:0 40px}
-.music{display:grid;gap:14px}
-.music .frame{border-radius:var(--r);overflow:hidden;border:1.5px solid var(--line);background:#fafafa;box-shadow:var(--shadow)}
+.music{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,340px);align-items:center;gap:16px 24px;border-radius:26px;padding:18px 18px 18px 24px;background:#111;color:#fff;box-shadow:var(--shadow)}
+.music .eyebrow{color:#FFD84D}
+.music .name{font-family:var(--f-display);font-weight:800;font-size:clamp(24px,3.4vw,34px);line-height:1.05;margin:4px 0 8px;overflow-wrap:anywhere}
+.music a{color:#FFD84D;font-size:13.5px}
+.music .frame{border-radius:16px;overflow:hidden;background:#111}
 .music iframe{display:block;width:100%;border:0}
+@media (max-width:640px){ .me{justify-items:start} }
+@media (max-width:640px){ .music{grid-template-columns:minmax(0,1fr);padding:18px} }
 footer{font-size:13px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:6px 16px;justify-content:space-between;border-top:1.5px solid var(--line);padding-top:16px}
 
 @media (max-width:900px){ .hero{grid-template-columns:1fr 1fr} .hero .together{grid-column:1 / -1;min-height:0} .cols{grid-template-columns:minmax(0,1fr)} }
@@ -213,8 +221,9 @@ footer{font-size:13px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:6px 16p
 </style>
 </head>
 <body>
-<div id="root" class="wrap"><p class="hint">Загружаю календарь…</p></div>
+<div id="top" class="wrap top-wrap"></div>
 <div id="music" class="wrap music-wrap" hidden></div>
+<div id="root" class="wrap root-wrap"><p class="hint">Загружаю календарь…</p></div>
 <div class="wrap foot-wrap"><footer><span>Время минское. Каждый правит только своё расписание. Изменения приходят второму в Telegram.</span><span class="mono">обновляется само</span></footer></div>
 <div id="modal-root"></div>
 <script src="config.js"></script>
@@ -400,10 +409,11 @@ function render(){
   var N = now(), curWeek = mondayOf(N.date);
   if (!ui.week) ui.week = curWeek;
   if (ui.sel == null) ui.sel = ui.week === curWeek ? dayIdx(N.date) : 0;
-  root.textContent = "";
-  root.appendChild(header());
-  if (!me) root.appendChild(el("div",{class:"banner"},[el("span",{text:"Войди как Артур или Саша, чтобы заполнять свою занятость и бронировать время."}), el("button",{type:"button",class:"btn pink small",onclick:openLogin,text:"Войти"})]));
-  root.appendChild(hero());
+  var top = document.getElementById("top");
+  root.textContent = ""; top.textContent = "";
+  top.appendChild(header());
+  if (!me) top.appendChild(el("div",{class:"banner"},[el("span",{text:"Войди как Артур или Саша, чтобы заполнять свою занятость и бронировать время."}), el("button",{type:"button",class:"btn pink small",onclick:openLogin,text:"Войти"})]));
+  top.appendChild(hero());
   root.appendChild(weekNav(curWeek));
   root.appendChild(stats());
   root.appendChild(grid(N));
@@ -745,12 +755,16 @@ function copyPrev(){
 (function(){
   var src = (CFG.playlist || "").trim(), box = document.getElementById("music");
   if (!/^https:\/\/music\.yandex\.(ru|by|com|kz)\/iframe\//.test(src)) return;
-  var h = Math.max(180, Math.min(900, +CFG.playlistHeight || 450));
-  var frame = el("iframe",{src:src,title:"Плейлист в Яндекс Музыке",allow:"clipboard-write",loading:"lazy",style:"height:" + h + "px"});
-  box.appendChild(el("section",{class:"music"},[
-    el("div",{class:"sec-h"},[el("h2",{text:CFG.playlistTitle ? "Наш плейлист: " + CFG.playlistTitle : "Наш плейлист"}),
-      CFG.playlistLink ? el("a",{href:CFG.playlistLink,target:"_blank",rel:"noopener",text:"Открыть в Яндекс Музыке →"}) : null]),
-    el("div",{class:"frame"},[frame])
+  // playlistHeight = видимая часть плеера; список треков ниже обрезается
+  var h = Math.max(60, Math.min(900, +CFG.playlistHeight || 130));
+  var frame = el("iframe",{src:src,title:"Плейлист в Яндекс Музыке",allow:"clipboard-write",style:"height:" + (h + 320) + "px"});
+  box.appendChild(el("section",{class:"music","aria-label":"Наш плейлист"},[
+    el("div",null,[
+      el("div",{class:"eyebrow",text:"Наш плейлист"}),
+      el("div",{class:"name",text:CFG.playlistTitle || "Музыка"}),
+      CFG.playlistLink ? el("a",{href:CFG.playlistLink,target:"_blank",rel:"noopener",text:"Открыть в Яндекс Музыке →"}) : null
+    ]),
+    el("div",{class:"frame",style:"height:" + h + "px"},[frame])
   ]));
   box.hidden = false;
 })();
