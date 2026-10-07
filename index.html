@@ -217,13 +217,52 @@ footer{font-size:13px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:6px 16p
 @media (max-width:900px){ .hero{grid-template-columns:1fr 1fr} .hero .together{grid-column:1 / -1;min-height:0} .cols{grid-template-columns:minmax(0,1fr)} }
 @media (max-width:720px){ .stats{grid-template-columns:repeat(2,minmax(0,1fr))} .dayhead{grid-template-columns:minmax(0,1fr)} }
 @media (max-width:560px){ .hero{grid-template-columns:minmax(0,1fr)} .pcard{min-height:0} .pair{grid-template-columns:minmax(0,1fr)} }
+/* motion */
+:root{--ease:cubic-bezier(.2,.8,.2,1)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeOut{from{opacity:1}to{opacity:0}}
+@keyframes pop{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes popOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(12px) scale(.98)}}
+@keyframes slideL{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes slideR{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:none}}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,16px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes shimmer{from{background-position:-400px 0}to{background-position:400px 0}}
+.intro > *{animation:fadeUp .55s var(--ease) both}
+.intro > *:nth-child(2){animation-delay:.05s}.intro > *:nth-child(3){animation-delay:.1s}.intro > *:nth-child(4){animation-delay:.15s}
+.intro > *:nth-child(5){animation-delay:.2s}.intro > *:nth-child(6){animation-delay:.25s}.intro > *:nth-child(n+7){animation-delay:.3s}
+.intro .hero > *{animation:fadeUp .6s var(--ease) both}
+.intro .hero > *:nth-child(2){animation-delay:.08s}.intro .hero > *:nth-child(3){animation-delay:.16s}
+.week.go-l{animation:slideL .35s var(--ease) both}.week.go-r{animation:slideR .35s var(--ease) both}
+.swap > *{animation:fadeUp .35s var(--ease) both}
+.swap > *:nth-child(2){animation-delay:.04s}.swap > *:nth-child(3){animation-delay:.08s}.swap > *:nth-child(4){animation-delay:.12s}
+.scrim{animation:fadeIn .2s ease both}
+.modal{animation:pop .28s var(--ease) both}
+.scrim.closing{animation:fadeOut .18s ease both}
+.scrim.closing .modal{animation:popOut .18s ease both}
+.toast{animation:toastIn .3s var(--ease) both;transition:opacity .25s,transform .25s}
+.toast.out{opacity:0;transform:translate(-50%,10px)}
+.btn,.tab,.opt,.arr,.seg button,.wh{transition:transform .15s var(--ease),background-color .2s,color .2s,border-color .2s,box-shadow .2s}
+.btn:active:not(:disabled),.opt:active,.tab:active,.arr:active,.cell:active{transform:scale(.96)}
+.cell{transition:transform .2s var(--ease),box-shadow .2s,opacity .3s}
+.row,.item,.stat,.pc{transition:border-color .25s,box-shadow .25s,background-color .25s}
+.pending{opacity:.6;transition:opacity .2s}
+.gate{display:grid;justify-items:center;text-align:center;gap:12px;padding:48px 20px;border-radius:26px;background:var(--surface);border:1.5px solid var(--line);box-shadow:var(--shadow);animation:fadeUp .5s var(--ease) both}
+.gate-lock{font-size:40px;line-height:1}
+.gate .hint{max-width:42ch;margin:0 0 6px;font-size:14.5px}
+.skel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.skel i{display:block;height:200px;border-radius:26px;background:linear-gradient(90deg,var(--surface-2) 0,var(--surface) 50%,var(--surface-2) 100%);background-size:800px 100%;animation:shimmer 1.3s linear infinite}
+@media (max-width:640px){
+  .scrim{place-items:end center;padding:0}
+  .modal{width:100%;border-radius:24px 24px 0 0;padding-bottom:calc(22px + env(safe-area-inset-bottom,0px));max-height:88vh}
+}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 <div id="top" class="wrap top-wrap"></div>
 <div id="music" class="wrap music-wrap" hidden></div>
-<div id="root" class="wrap root-wrap"><p class="hint">Загружаю календарь…</p></div>
+<div id="root" class="wrap root-wrap"><div class="skel" aria-label="Загружаю календарь"><i></i><i></i><i></i></div></div>
 <div class="wrap foot-wrap"><footer><span>Время минское. Каждый правит только своё расписание. Изменения приходят второму в Telegram.</span><span class="mono">обновляется само</span></footer></div>
 <div id="modal-root"></div>
 <script src="config.js"></script>
@@ -289,25 +328,15 @@ function now(){
 }
 function store(k, v){ try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e){} }
 function read(k){ try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e){ return null; } }
-function toast(t){ var o = document.querySelector(".toast"); if (o) o.remove(); var x = el("div",{class:"toast",role:"status",text:t}); document.body.appendChild(x); setTimeout(function(){ x.remove(); }, 2800); }
+function toast(t){ var o = document.querySelector(".toast"); if (o) o.remove(); var x = el("div",{class:"toast",role:"status",text:t}); document.body.appendChild(x); setTimeout(function(){ x.classList.add("out"); setTimeout(function(){ x.remove(); }, 260); }, 2600); }
 function clone(o){ return JSON.parse(JSON.stringify(o)); }
 
 /* ---------- data ---------- */
 function emptyDays(){ var a = []; for (var d = 0; d < 7; d++) a.push({ note:"", load:null, slots:[0,1,2,3].map(function(){ return { busy:null, cat:"unknown", text:"", link:"" }; }) }); return a; }
-function seed(){
-  var st = { version:1, updated:Date.now(), weeks:{}, bookings:[], log:[] };
-  var a = { days: emptyDays() }; st.weeks["2026-10-05"] = { artur: a };
-  a.days[2].note = "Та самая тяжёлая среда";
-  [[3,50,[[true,"sleep","Сплю после тяжёлой среды"],[false,"rest","12:30–15:00 отдыхаю, чай пью, ничего не делаю"],[true,"study","Университет, я студент (почти дипломированный)"],[false,"miss","Ничем не занят, обижаюсь и скучаю по любимой женщине"]]],
-   [4,50,[[true,"sleep","Сплю после тяжёлого четверга"],[false,"rest","12:30–15:00 отдыхаю, чай пью, ничего не делаю"],[true,"study","Университет, я студент (почти дипломированный), до 18:10"],[false,"miss","Ничем не занят, скучаю по самой любимой женщине"]]],
-   [5,50,[[true,"sleep","Сплю после тяжёлой пятницы"],[false,"clinic","Тусуюсь в клинике с 13:00 до 14/15:00"],[true,"cook","Готовлю что-то на ужин САМ (кукинг)","https://imgur.com/a/3y1zVYs"],[false,"miss","Скорее всего ничем не занят, возможно всё ещё скучаю. После 21:00 возможны форс-мажорные дела"]]],
-   [6,25,[[true,"sleep","Сплю после тяжёлой субботы"],[false,"together","Живу совместную жизнь"],[false,"together","Живу совместную жизнь"],[false,"together","Живу совместную жизнь"]]]
-  ].forEach(function(p){ a.days[p[0]].load = p[1]; p[2].forEach(function(x, i){ a.days[p[0]].slots[i] = { busy:x[0], cat:x[1], text:x[2], link:x[3] || "" }; }); });
-  return st;
-}
+function seed(){ return { version:1, updated:Date.now(), weeks:{}, bookings:[], log:[] }; }
 var S = null;
 var me = read("kto-gde-me");
-var ui = { week:null, sel:null, view:"both", sync: DEMO ? "demo" : "load", lastSync:0 };
+var ui = { week:null, sel:null, view:"both", sync: DEMO ? "demo" : "load", lastSync:0, anim:"", pending:0, first:true };
 
 function person(week, who){ var w = S && S.weeks[week]; return (w && w[who]) || { days: emptyDays(), empty:true }; }
 function slotOf(week, who, d, s){ return person(week, who).days[d].slots[s]; }
@@ -359,22 +388,24 @@ function whenTxt(o){
 /* ---------- network ---------- */
 function setSync(s){ ui.sync = s; if (s === "ok") ui.lastSync = Date.now(); var x = document.getElementById("sync"); if (x) x.replaceWith(syncEl()); }
 function pull(force){
-  if (DEMO) return Promise.resolve();
-  var url = API + (API.indexOf("?") >= 0 ? "&" : "?") + "action=get" + (S && !force ? "&v=" + S.version : "") + "&t=" + Date.now();
-  return fetch(url).then(function(r){ return r.json(); }).then(function(j){
+  if (DEMO || !me || ui.pending > 0) return Promise.resolve();
+  var body = { action:"get", who:me.who, code:me.code, v: S && !force ? S.version : 0 };
+  return fetch(API, { method:"POST", body: JSON.stringify(body) }).then(function(r){ return r.json(); }).then(function(j){
+    if (!j.ok && j.error === "bad_code"){ lockOut("Код сменился. Войди заново."); return; }
     if (!j.ok) throw new Error("bad");
+    if (ui.pending > 0) return;
     if (j.changed && j.state){ S = j.state; store("kto-gde-cache", S); setSync("ok"); render(); }
     else setSync("ok");
   }).catch(function(){ setSync("err"); });
 }
 var call = function(action, payload){
-  if (DEMO){ applyLocal(action, payload); store("kto-gde-demo", S); return Promise.resolve({ ok:true }); }
+  if (DEMO){ store("kto-gde-demo", S); return Promise.resolve({ ok:true }); }
   var body = Object.assign({ action:action, who:me && me.who, code:me && me.code }, payload || {});
   return fetch(API, { method:"POST", body: JSON.stringify(body) })
     .then(function(r){ return r.json(); })
     .then(function(j){
       if (j.ok && j.state){ S = j.state; store("kto-gde-cache", S); setSync("ok"); }
-      if (!j.ok && j.error === "bad_code" && action !== "login"){ me = null; store("kto-gde-me", null); }
+      if (!j.ok && j.error === "bad_code" && action !== "login") setTimeout(function(){ lockOut("Код сменился. Войди заново."); }, 0);
       return j;
     })
     .catch(function(){ setSync("err"); return { ok:false, error:"network" }; });
@@ -387,12 +418,12 @@ function errText(e){
 function ensure(week, who){ S.weeks[week] = S.weeks[week] || {}; S.weeks[week][who] = S.weeks[week][who] || { days: emptyDays() }; delete S.weeks[week][who].empty; return S.weeks[week][who]; }
 function applyLocal(a, p){
   if (a === "login") return;
-  var who = me.who, txt = "";
-  if (a === "saveSlot"){ ensure(p.week, who).days[p.day].slots[p.slot] = p.data; txt = NAME[who] + " изменил(а) " + DOW_ACC[p.day] + ", " + slotLabel(p.slot); }
-  if (a === "saveDay"){ var dd = ensure(p.week, who).days[p.day]; dd.note = p.note; dd.load = p.load; txt = NAME[who] + " изменил(а) " + DOW_ACC[p.day]; }
-  if (a === "copyWeek"){ ensure(p.week, who).days = clone(person(p.from, who).days); txt = NAME[who] + " перенёс(ла) расписание"; }
-  if (a === "book"){ S.bookings.push({ id: Math.random().toString(36).slice(2,10), week:p.week, day:p.day, slot:p.slot, by:who, to:other(who), intent:p.intent, text:p.text, status:"new", reply:"", ts:Date.now() }); txt = NAME[who] + " забронировал(а) " + DOW_ACC[p.day] + ", " + slotLabel(p.slot); }
-  if (a === "respond"){ S.bookings.forEach(function(b){ if (b.id === p.id){ b.status = p.status; b.reply = p.reply || ""; } }); txt = NAME[who] + " ответил(а) на бронь"; }
+  var who = me.who, txt = "", sh = who === "sasha";
+  if (a === "saveSlot"){ ensure(p.week, who).days[p.day].slots[p.slot] = p.data; txt = NAME[who] + (sh ? " изменила " : " изменил ") + DOW_ACC[p.day] + ", " + slotLabel(p.slot); }
+  if (a === "saveDay"){ var dd = ensure(p.week, who).days[p.day]; dd.note = p.note; dd.load = p.load; txt = NAME[who] + (sh ? " изменила " : " изменил ") + DOW_ACC[p.day]; }
+  if (a === "copyWeek"){ ensure(p.week, who).days = clone(person(p.from, who).days); txt = NAME[who] + (sh ? " перенесла расписание" : " перенёс расписание"); }
+  if (a === "book"){ S.bookings.push({ id: Math.random().toString(36).slice(2,10), week:p.week, day:p.day, slot:p.slot, by:who, to:other(who), intent:p.intent, text:p.text, status:"new", reply:"", ts:Date.now() }); txt = NAME[who] + (sh ? " забронировала " : " забронировал ") + DOW_ACC[p.day] + ", " + slotLabel(p.slot); }
+  if (a === "respond"){ S.bookings.forEach(function(b){ if (b.id === p.id){ b.status = p.status; b.reply = p.reply || ""; } }); txt = NAME[who] + (sh ? " ответила на бронь" : " ответил на бронь"); }
   S.version++; S.log.unshift({ ts:Date.now(), who:who, text:txt }); S.log = S.log.slice(0, 40);
 }
 
@@ -404,6 +435,7 @@ function syncEl(){
   return el("span",{id:"sync",class:"sync"},[el("i"), "синхронизировано " + hm(now().min)]);
 }
 function render(){
+  if (!DEMO && !me) return renderGate();
   if (!S) return;
   var root = document.getElementById("root"), y = window.scrollY;
   var N = now(), curWeek = mondayOf(N.date);
@@ -412,14 +444,17 @@ function render(){
   var top = document.getElementById("top");
   root.textContent = ""; top.textContent = "";
   top.appendChild(header());
-  if (!me) top.appendChild(el("div",{class:"banner"},[el("span",{text:"Войди как Артур или Саша, чтобы заполнять свою занятость и бронировать время."}), el("button",{type:"button",class:"btn pink small",onclick:openLogin,text:"Войти"})]));
+  if (!me) top.appendChild(el("div",{class:"banner"},[el("span",{text:"Демо-режим: войди, чтобы попробовать."}), el("button",{type:"button",class:"btn pink small",onclick:openLogin,text:"Войти"})]));
   top.appendChild(hero());
   root.appendChild(weekNav(curWeek));
   root.appendChild(stats());
   root.appendChild(grid(N));
   root.appendChild(day(N));
   root.appendChild(el("div",{class:"cols"},[bookings(), feed()]));
-  window.scrollTo(0, y);
+  if (ui.first){ ui.first = false; top.classList.add("intro"); root.classList.add("intro"); setTimeout(function(){ top.classList.remove("intro"); root.classList.remove("intro"); }, 1200); }
+  var mb = document.getElementById("music"); if (mb.dataset.ready) mb.hidden = false;
+  ui.anim = "";
+  window.scrollTo({ top:y, left:0, behavior:"instant" });
   var gb = root.querySelector(".gridbox"), tc = root.querySelector(".wh.today") || root.querySelector(".wh.sel");
   if (gb && tc && gb.scrollWidth > gb.clientWidth) gb.scrollLeft = Math.max(0, tc.offsetLeft - 56);
 }
@@ -471,10 +506,10 @@ function weekNav(curWeek){
   var mine = me ? person(w, me.who) : null, prev = me ? person(addDays(w, -7), me.who) : null;
   var canCopy = me && mine.empty && !prev.empty;
   return el("div",{class:"wnav"},[
-    el("button",{type:"button",class:"arr","aria-label":"Предыдущая неделя",onclick:function(){ ui.week = addDays(ui.week, -7); ui.sel = null; render(); },text:"‹"}),
+    el("button",{type:"button",class:"arr","aria-label":"Предыдущая неделя",onclick:function(){ ui.week = addDays(ui.week, -7); ui.sel = null; ui.anim = "r"; render(); },text:"‹"}),
     el("span",{class:"lbl",text:lbl}),
-    el("button",{type:"button",class:"arr","aria-label":"Следующая неделя",onclick:function(){ ui.week = addDays(ui.week, 7); ui.sel = null; render(); },text:"›"}),
-    w !== curWeek ? el("button",{type:"button",class:"btn ghost small",onclick:function(){ ui.week = curWeek; ui.sel = null; render(); },text:"К текущей неделе"}) : el("span",{class:"chip acc",text:"эта неделя"}),
+    el("button",{type:"button",class:"arr","aria-label":"Следующая неделя",onclick:function(){ ui.week = addDays(ui.week, 7); ui.sel = null; ui.anim = "l"; render(); },text:"›"}),
+    w !== curWeek ? el("button",{type:"button",class:"btn ghost small",onclick:function(){ ui.anim = ui.week > curWeek ? "r" : "l"; ui.week = curWeek; ui.sel = null; render(); },text:"К текущей неделе"}) : el("span",{class:"chip acc",text:"эта неделя"}),
     canCopy ? el("button",{type:"button",class:"btn pink small",onclick:copyPrev,text:"Перенести моё расписание с прошлой недели"}) : null
   ]);
 }
@@ -495,7 +530,7 @@ function stats(){
 function grid(N){
   var w = ui.week, curWeek = mondayOf(N.date), todayIdx = w === curWeek ? dayIdx(N.date) : -1;
   var nowAbs = (utc(N.date) - utc(w)) / 6e4 + N.min;
-  var g = el("div",{class:"week"}); g.appendChild(el("div"));
+  var g = el("div",{class:"week" + (ui.anim === "l" ? " go-l" : ui.anim === "r" ? " go-r" : "")}); g.appendChild(el("div"));
   for (var d = 0; d < 7; d++){
     (function(d){
       var date = addDays(w, d);
@@ -538,6 +573,7 @@ function grid(N){
   ]);
 }
 function pick(d, s){
+  if (ui.sel !== d) ui.anim = "day";
   ui.sel = d; render();
   var t = document.getElementById(s != null ? "row-" + s : "day");
   if (t) t.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: s != null ? "center" : "start" });
@@ -547,7 +583,7 @@ function day(N){
   var nowAbs = (utc(N.date) - utc(w)) / 6e4 + N.min;
   var tabs = el("div",{class:"tabs",role:"tablist"});
   for (var i = 0; i < 7; i++) (function(i){
-    tabs.appendChild(el("button",{type:"button",role:"tab",class:"tab" + (w === curWeek && i === dayIdx(N.date) ? " today" : ""),"aria-selected":i === d ? "true" : "false",onclick:function(){ ui.sel = i; render(); },text:DOW_S[i] + " " + ddmm(addDays(w, i))}));
+    tabs.appendChild(el("button",{type:"button",role:"tab",class:"tab" + (w === curWeek && i === dayIdx(N.date) ? " today" : ""),"aria-selected":i === d ? "true" : "false",onclick:function(){ if (ui.sel !== i) ui.anim = "day"; ui.sel = i; render(); },text:DOW_S[i] + " " + ddmm(addDays(w, i))}));
   })(i);
   function dh(who){
     var p = person(w, who).days[d], mine = me && me.who === who;
@@ -559,7 +595,7 @@ function day(N){
     ]);
   }
   var head = el("div",{class:"dayhead"},[el("h3",{text:DOW[d] + ", " + dLong(date)}), dh("artur"), dh("sasha")]);
-  var rows = el("div",{class:"rows"});
+  var rows = el("div",{class:"rows" + (ui.anim === "day" || ui.anim === "l" || ui.anim === "r" ? " swap" : "")});
   for (var s = 0; s < 4; s++) (function(s){
     var st = d*1440 + SLOT_T[s][0], en = d*1440 + SLOT_T[s][1], isNow = nowAbs >= st && nowAbs < en, past = nowAbs >= en;
     var a = slotOf(w,"artur",d,s), b = slotOf(w,"sasha",d,s), both = a.busy === false && b.busy === false;
@@ -624,7 +660,30 @@ function feed(){
 }
 
 /* ---------- modals ---------- */
-function closeModal(){ document.getElementById("modal-root").textContent = ""; }
+function closeModal(){
+  var mr = document.getElementById("modal-root"), sc = mr.querySelector(".scrim");
+  if (!sc || sc.classList.contains("closing")) return;
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches){ mr.textContent = ""; return; }
+  sc.classList.add("closing");
+  setTimeout(function(){ if (sc.parentNode === mr) mr.removeChild(sc); }, 180);
+}
+/* optimistic writes: the screen changes instantly, the server catches up in the background */
+function optimistic(action, payload, okMsg){
+  var backup = clone(S);
+  applyLocal(action, payload);
+  ui.pending++;
+  closeModal(); render(); toast(okMsg);
+  return call(action, payload).then(function(j){
+    ui.pending--;
+    if (j.ok){ if (!document.getElementById("modal-root").querySelector(".scrim:not(.closing)")) render(); }
+    else {
+      S = backup; render();
+      toast(errText(j.error) + " Изменение отменено.");
+      if (j.error === "bad_code") openLogin();
+    }
+    return j;
+  });
+}
 function showModal(title, sub, body){
   var mr = document.getElementById("modal-root"); mr.textContent = "";
   var scrim = el("div",{class:"scrim",onclick:function(e){ if (e.target === scrim) closeModal(); }},[
@@ -650,14 +709,41 @@ function openLogin(){
     go.disabled = true; go.textContent = "Проверяю…";
     var prev = me; me = cand;
     call("login").then(function(j){
-      if (j.ok){ store("kto-gde-me", me); closeModal(); render(); toast("Привет, " + NAME[sel] + "!"); }
+      if (j.ok){ store("kto-gde-me", me); closeModal(); S = null; showLoading(); toast("Привет, " + NAME[sel] + "!"); pull(true).then(function(){ if (!S) loadFailed(); }); }
       else { me = prev; err.textContent = errText(j.error); err.hidden = false; go.disabled = false; go.textContent = "Войти"; }
     });
   }});
   code.addEventListener("keydown", function(e){ if (e.key === "Enter") go.click(); });
-  showModal("Кто ты?", "Код нужен, чтобы менять расписание. Смотреть можно и без него.", [pickBox, el("label",null,["Код доступа", code]), err, el("div",{class:"mrow"},[el("button",{type:"button",class:"btn ghost",onclick:closeModal,text:"Отмена"}), go])]);
+  showModal("Кто ты?", "Календарь закрытый: без кода его не видно.", [pickBox, el("label",null,["Код доступа", code]), err, el("div",{class:"mrow"},[el("button",{type:"button",class:"btn ghost",onclick:closeModal,text:"Отмена"}), go])]);
 }
-function logout(){ me = null; store("kto-gde-me", null); render(); toast("Вышли. Смотреть можно и так."); }
+function lockOut(msg){
+  me = null; S = null; store("kto-gde-me", null); store("kto-gde-cache", null);
+  closeModal(); render(); if (msg) toast(msg);
+}
+function logout(){ lockOut("Ты вышел(ла). Без кода календарь не виден."); }
+function showLoading(){
+  var r = document.getElementById("root"); r.textContent = "";
+  r.appendChild(el("div",{class:"skel","aria-label":"Загружаю календарь"},[el("i"), el("i"), el("i")]));
+}
+function loadFailed(){
+  var r = document.getElementById("root"); r.textContent = "";
+  r.appendChild(el("div",{class:"banner"},[el("span",{text:"Не удалось загрузить календарь. Проверь интернет и обнови страницу."})]));
+}
+function renderGate(){
+  var top = document.getElementById("top"), root = document.getElementById("root");
+  document.getElementById("music").hidden = true;
+  top.textContent = ""; root.textContent = "";
+  top.appendChild(el("header",{class:"top"},[el("div",null,[
+    el("div",{class:"eyebrow"},[el("b",{text:"Артур"}), " × ", el("b",{text:"Александра Занятая"}), " · общий календарь"]),
+    el("h1",null,["Кто где", el("span",{class:"q",text:"?"})])
+  ])]));
+  root.appendChild(el("section",{class:"gate"},[
+    el("div",{class:"eyebrow",text:"Только для двоих"}),
+    el("h2",{text:"Это закрытый календарь"}),
+    el("p",{class:"hint",text:"Расписание, брони и плейлист видны только Артуру и Саше. Войди со своим кодом."}),
+    el("button",{type:"button",class:"btn pink",onclick:openLogin,text:"Войти"})
+  ]));
+}
 function failed(j, err, btn, label){
   err.textContent = errText(j.error); err.hidden = false;
   if (btn){ btn.disabled = false; btn.textContent = label; }
@@ -689,11 +775,7 @@ function openSlot(w, d, s){
     var data = { busy: stVal === "busy" ? true : stVal === "free" ? false : null,
                  cat: stVal === "unk" ? "unknown" : (cur.cat === "unknown" ? (stVal === "busy" ? "errands" : "rest") : cur.cat),
                  text: txt.value.trim(), link: /^https?:\/\//.test(link.value.trim()) ? link.value.trim() : "" };
-    save.disabled = true; save.textContent = "Сохраняю…";
-    call("saveSlot", { week:w, day:d, slot:s, data:data }).then(function(j){
-      if (j.ok){ closeModal(); render(); toast(DEMO ? "Сохранено (демо, только у тебя)" : "Сохранено. " + NAME[other(me.who)] + " получит уведомление"); }
-      else failed(j, err, save, "Сохранить");
-    });
+    optimistic("saveSlot", { week:w, day:d, slot:s, data:data }, DEMO ? "Сохранено (демо, только у тебя)" : "Сохранено");
   }});
   showModal("Моё время: " + DOW_ACC[d] + ", " + slotLabel(s), ddmm(addDays(w, d)), [
     el("div",{class:"fld"},[el("span",{text:"Статус"}), stateSeg]), catLbl,
@@ -708,10 +790,7 @@ function openDay(w, d){
   var err = el("p",{class:"err",hidden:true});
   var save = el("button",{type:"button",class:"btn pink",text:"Сохранить",onclick:function(){
     var l = load.value === "" ? null : Math.max(0, Math.min(100, Math.round(+load.value)));
-    save.disabled = true; save.textContent = "Сохраняю…";
-    call("saveDay", { week:w, day:d, note:note.value.trim(), load:l }).then(function(j){
-      if (j.ok){ closeModal(); render(); toast("Сохранено"); } else failed(j, err, save, "Сохранить");
-    });
+    optimistic("saveDay", { week:w, day:d, note:note.value.trim(), load:l }, "Сохранено");
   }});
   showModal(DOW[d] + ", " + ddmm(addDays(w, d)), "Подпись дня и твоя степень занятости", [
     el("label",null,["Подпись дня", note]), el("label",null,["Степень занятости, %", load]), err,
@@ -727,11 +806,7 @@ function openBook(w, d, s){
   var ta = el("textarea",{id:"book-text",maxlength:"500",placeholder:"пара слов для " + (to === "sasha" ? "Саши" : "Артура")});
   var err = el("p",{class:"err",hidden:true});
   var send = el("button",{type:"button",class:"btn pink",text:"Забронировать",onclick:function(){
-    send.disabled = true; send.textContent = "Отправляю…";
-    call("book", { week:w, day:d, slot:s, intent:intent, text:ta.value.trim() }).then(function(j){
-      if (j.ok){ closeModal(); render(); toast(DEMO ? "Бронь создана (демо)" : "Готово! " + NAME[to] + " получит уведомление в Telegram"); }
-      else failed(j, err, send, "Забронировать");
-    });
+    optimistic("book", { week:w, day:d, slot:s, intent:intent, text:ta.value.trim() }, DEMO ? "Бронь создана (демо)" : "Забронировано! " + NAME[to] + " получит уведомление");
   }});
   showModal((x.busy ? "Отвлечь: " : "Бронь: ") + DOW_ACC[d] + ", " + slotLabel(s), NAME[to] + " в это время: " + (x.busy === null ? "не расписано" : (x.busy ? G[to].b : G[to].f) + " · " + CATS[x.cat].label.toLowerCase()), [
     el("div",{class:"fld"},[el("span",{text:"Повод"}), opts]), el("label",null,["Сообщение", ta]), err,
@@ -739,16 +814,11 @@ function openBook(w, d, s){
   ]);
 }
 function respond(b, status, reply){
-  call("respond", { id:b.id, status:status, reply:(reply || "").trim() }).then(function(j){
-    if (j.ok){ render(); toast(status === "yes" ? "Бронь принята" : status === "no" ? "Бронь отклонена" : "Бронь отменена"); }
-    else { toast(errText(j.error)); if (j.error === "bad_code"){ render(); openLogin(); } }
-  });
+  optimistic("respond", { id:b.id, status:status, reply:(reply || "").trim() }, status === "yes" ? "Бронь принята" : status === "no" ? "Бронь отклонена" : "Бронь отменена");
 }
 function copyPrev(){
   var w = ui.week;
-  call("copyWeek", { week:w, from:addDays(w, -7) }).then(function(j){
-    if (j.ok){ render(); toast("Расписание перенесено. Поправь, что изменилось"); } else toast(errText(j.error));
-  });
+  optimistic("copyWeek", { week:w, from:addDays(w, -7) }, "Расписание перенесено. Поправь, что изменилось");
 }
 
 /* ---------- music (outside #root so re-renders never restart the player) ---------- */
@@ -766,17 +836,17 @@ function copyPrev(){
     ]),
     el("div",{class:"frame",style:"height:" + h + "px"},[frame])
   ]));
-  box.hidden = false;
+  box.dataset.ready = "1";
+  if ((DEMO || me) && document.querySelector("#top .hero")) box.hidden = false;
 })();
 
 /* ---------- boot ---------- */
 if (DEMO){ S = read("kto-gde-demo") || seed(); }
-else { S = read("kto-gde-cache"); }
-if (S) render();
+else { S = me ? read("kto-gde-cache") : null; }
+if (!DEMO && !me){ renderGate(); setTimeout(openLogin, 350); }
+else if (S) render();
 if (!DEMO){
-  pull(true).then(function(){
-    if (!S){ var r = document.getElementById("root"); r.textContent = ""; r.appendChild(el("div",{class:"banner"},[el("span",{text:"Не удалось загрузить календарь. Проверь интернет и обнови страницу."})])); }
-  });
+  if (me) pull(true).then(function(){ if (me && !S) loadFailed(); });
   setInterval(function(){ if (!document.hidden && !document.getElementById("modal-root").firstChild) pull(false); }, 20000);
   document.addEventListener("visibilitychange", function(){ if (!document.hidden) pull(false); });
 }
