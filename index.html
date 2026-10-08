@@ -302,6 +302,7 @@ footer{font-size:13px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:6px 16p
 .letter h3{margin:0;font-family:var(--f-display);font-weight:800;font-size:clamp(24px,3.6vw,34px);line-height:1.05;color:#FFD84D}
 .letter p{margin:0;font-family:"Caveat",cursive;font-weight:500;font-size:clamp(22px,2.6vw,27px);line-height:1.25;color:#fff}
 .letter .ghost{color:transparent}
+.letter .ln{display:block;white-space:nowrap}
 .letter .caret{display:inline-block;width:0;white-space:nowrap;font-style:normal;position:relative}
 .letter .hes:after{content:"";display:inline-block;width:2px;height:.85em;margin-left:1px;vertical-align:-.08em;background:#FF9DBD;border-radius:2px;animation:caret .9s steps(1) infinite}
 @keyframes caret{50%{opacity:0}}
@@ -984,7 +985,8 @@ function showGiftCard(ov, stage, d, g){
   ov.scrollTop = 0;
   typeLetter(card.querySelector(".letter"), paras, [card.querySelector(".letter .sign"), reply]);
 }
-/* письмо «пишется» на глазах; тап по письму — дописать сразу */
+/* письмо «пишется» на глазах; тап по письму — дописать сразу.
+   Строки раскладываются заранее по готовому тексту, поэтому ничего не прыгает. */
 function typeLetter(box, ps, later){
   // [[текст]] в письме — «сомнение»: пишется, пауза, стирается
   var items = ps.map(function(p){
@@ -999,34 +1001,52 @@ function typeLetter(box, ps, later){
       last = re.lastIndex;
     }
     plain(raw.slice(last));
-    // текущее слово целиком в nowrap: слова не перескакивают со строки на строку
-    var a = el("span"), w1 = el("span"), g1 = el("span",{class:"ghost"}), b = el("span",{class:"ghost",text:fin});
-    p.textContent = ""; p.appendChild(a); p.appendChild(el("span",{style:"white-space:nowrap"},[w1, g1])); p.appendChild(b);
-    return { fin:fin, ops:ops, a:a, w1:w1, g1:g1, b:b, done:"", tmp:"" };
+    p.textContent = fin;
+    return { p:p, fin:fin, ops:ops, lines:null, done:"", tmp:"" };
   });
   var hes = el("span",{class:"hes"}), caret = el("i",{class:"caret","aria-hidden":"true"},[hes]);
   var i = 0, j = 0, done = false, timer = null;
   function showLater(){ later.forEach(function(x, k){ if (x) setTimeout(function(){ x.classList.add("on"); }, k ? 4200 : 2000); }); }
   function finish(){
     if (done) return; done = true; clearTimeout(timer);
-    items.forEach(function(it){ it.a.textContent = it.fin; it.w1.textContent = it.g1.textContent = it.b.textContent = ""; });
-    if (caret.parentNode) caret.remove();
+    window.removeEventListener("resize", finish);
+    items.forEach(function(it){ it.p.textContent = it.fin; });
     box.classList.remove("typing"); showLater();
   }
   if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches){ finish(); return; }
   box.classList.add("typing");
   box.addEventListener("click", function(e){ if (!done && !e.target.closest("textarea,button")) finish(); });
+  function layout(it){
+    // разбиваем готовый текст на строки ровно так, как браузер его переносит
+    var node = it.p.firstChild, rx = /\S+\s*/g, mm, top = null, lines = [], cur = "";
+    while ((mm = rx.exec(it.fin))){
+      var r = document.createRange(); r.setStart(node, mm.index); r.setEnd(node, mm.index + 1);
+      var t = Math.round(r.getBoundingClientRect().top);
+      if (top !== null && t > top + 2){ lines.push(cur); cur = ""; }
+      top = t; cur += mm[0];
+    }
+    if (cur) lines.push(cur);
+    it.p.textContent = "";
+    it.lines = lines.map(function(txt){
+      var a = el("span"), g = el("span",{class:"ghost",text:txt});
+      it.p.appendChild(el("span",{class:"ln"},[a, g]));
+      return { txt:txt, a:a, g:g };
+    });
+  }
   function render(it){
-    var n = it.done.length, ws = it.done.lastIndexOf(" ") + 1, we = it.fin.indexOf(" ", n);
-    if (we < 0) we = it.fin.length;
-    it.a.textContent = it.done.slice(0, ws); it.w1.textContent = it.done.slice(ws);
-    it.g1.textContent = it.fin.slice(n, we); it.b.textContent = it.fin.slice(we);
+    var n = it.done.length, s = 0, at = null;
+    it.lines.forEach(function(L){
+      var k = Math.max(0, Math.min(L.txt.length, n - s));
+      L.a.textContent = L.txt.slice(0, k); L.g.textContent = L.txt.slice(k);
+      if (!at && (n - s < L.txt.length || L === it.lines[it.lines.length - 1])) at = L;
+      s += L.txt.length;
+    });
+    if (caret.previousSibling !== at.a) at.a.after(caret);
   }
   function step(){
     if (done) return;
-    if (!document.body.contains(box)){ done = true; return; }
+    if (!document.body.contains(box)){ done = true; window.removeEventListener("resize", finish); return; }
     var it = items[i];
-    if (j === 0) it.w1.after(caret);
     var op = it.ops[j++], ms = 34 + Math.random() * 38;
     if (op[0] === "c"){
       it.done += op[1];
@@ -1038,10 +1058,10 @@ function typeLetter(box, ps, later){
       if (!it.tmp){ // не влезает до конца строки — пишем «сомнение» с начала следующей
         caret.style.left = caret.style.top = "";
         hes.textContent = op[2];
-        var pr = it.a.parentNode.getBoundingClientRect(), cr = caret.getBoundingClientRect();
+        var pr = it.p.getBoundingClientRect(), cr = caret.getBoundingClientRect();
         if (hes.getBoundingClientRect().right > pr.right + 1){
           caret.style.left = (pr.left - cr.left) + "px";
-          caret.style.top = parseFloat(getComputedStyle(it.a.parentNode).lineHeight) + "px";
+          caret.style.top = parseFloat(getComputedStyle(it.p).lineHeight) + "px";
         }
       }
       it.tmp += op[1]; ms += 25;
@@ -1052,11 +1072,21 @@ function typeLetter(box, ps, later){
     if (j >= it.ops.length){
       i++; j = 0;
       if (i >= items.length){ timer = setTimeout(finish, 500); return; }
+      render(items[i]);
       ms = i === items.length - 1 ? 1500 : 800;
     }
     timer = setTimeout(step, ms);
   }
-  timer = setTimeout(step, 1200);
+  var fontsReady = document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise(function(r){ setTimeout(r, 2500); })]) : Promise.resolve();
+  setTimeout(function(){
+    fontsReady.then(function(){
+      if (done) return;
+      items.forEach(layout); items.forEach(function(it){ it.lines.forEach(function(L){ L.g.textContent = L.txt; }); });
+      render(items[0]);
+      window.addEventListener("resize", finish);
+      timer = setTimeout(step, 300);
+    });
+  }, 900);
 }
 
 /* ---------- music (outside #root so re-renders never restart the player) ---------- */
