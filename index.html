@@ -302,10 +302,12 @@ footer{font-size:13px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:6px 16p
 .letter h3{margin:0;font-family:var(--f-display);font-weight:800;font-size:clamp(24px,3.6vw,34px);line-height:1.05;color:#FFD84D}
 .letter p{margin:0;font-family:"Caveat",cursive;font-weight:500;font-size:clamp(22px,2.6vw,27px);line-height:1.25;color:#fff}
 .letter .ghost{color:transparent}
-.letter .caret{display:inline-block;width:2px;height:.85em;margin:0 1px -.08em;background:#FF9DBD;border-radius:2px;animation:caret .9s steps(1) infinite}
+.letter .caret{display:inline-block;width:0;white-space:nowrap;font-style:normal;position:relative}
+.letter .hes:after{content:"";display:inline-block;width:2px;height:.85em;margin-left:1px;vertical-align:-.08em;background:#FF9DBD;border-radius:2px;animation:caret .9s steps(1) infinite}
 @keyframes caret{50%{opacity:0}}
 .letter .later{opacity:0;transform:translateY(8px);transition:opacity .9s ease,transform .9s cubic-bezier(.2,.8,.2,1)}
 .letter .later.on{opacity:1;transform:none}
+.letter .sign.later{transition-duration:2s,2s}
 .letter.typing{cursor:pointer}
 .letter .sign{color:#FF9DBD;text-align:right;font-weight:700}
 .gift-reply{display:grid;gap:8px;margin-top:8px}
@@ -990,34 +992,41 @@ function typeLetter(box, ps, later){
     function plain(str){ for (var k = 0; k < str.length; k++) ops.push(["c", str.charAt(k), str.charAt(k + 1)]); }
     while ((m = re.exec(raw))){
       plain(raw.slice(last, m.index));
-      for (var k = 0; k < m[1].length; k++) ops.push(["h", m[1].charAt(k)]);
+      for (var k = 0; k < m[1].length; k++) ops.push(["h", m[1].charAt(k), m[1]]);
       ops.push(["w", 1100]);
       for (var k2 = 0; k2 < m[1].length; k2++) ops.push(["b"]);
       ops.push(["w", 450]);
       last = re.lastIndex;
     }
     plain(raw.slice(last));
-    var a = el("span"), b = el("span",{class:"ghost",text:fin});
-    p.textContent = ""; p.appendChild(a); p.appendChild(b);
-    return { fin:fin, ops:ops, a:a, b:b, done:"", tmp:"" };
+    // текущее слово целиком в nowrap: слова не перескакивают со строки на строку
+    var a = el("span"), w1 = el("span"), g1 = el("span",{class:"ghost"}), b = el("span",{class:"ghost",text:fin});
+    p.textContent = ""; p.appendChild(a); p.appendChild(el("span",{style:"white-space:nowrap"},[w1, g1])); p.appendChild(b);
+    return { fin:fin, ops:ops, a:a, w1:w1, g1:g1, b:b, done:"", tmp:"" };
   });
-  var caret = el("i",{class:"caret","aria-hidden":"true"});
+  var hes = el("span",{class:"hes"}), caret = el("i",{class:"caret","aria-hidden":"true"},[hes]);
   var i = 0, j = 0, done = false, timer = null;
-  function showLater(){ later.forEach(function(x, k){ if (x) setTimeout(function(){ x.classList.add("on"); }, 250 + k * 700); }); }
+  function showLater(){ later.forEach(function(x, k){ if (x) setTimeout(function(){ x.classList.add("on"); }, k ? 4200 : 2000); }); }
   function finish(){
     if (done) return; done = true; clearTimeout(timer);
-    items.forEach(function(it){ it.a.textContent = it.fin; it.b.textContent = ""; });
+    items.forEach(function(it){ it.a.textContent = it.fin; it.w1.textContent = it.g1.textContent = it.b.textContent = ""; });
     if (caret.parentNode) caret.remove();
     box.classList.remove("typing"); showLater();
   }
   if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches){ finish(); return; }
   box.classList.add("typing");
   box.addEventListener("click", function(e){ if (!done && !e.target.closest("textarea,button")) finish(); });
+  function render(it){
+    var n = it.done.length, ws = it.done.lastIndexOf(" ") + 1, we = it.fin.indexOf(" ", n);
+    if (we < 0) we = it.fin.length;
+    it.a.textContent = it.done.slice(0, ws); it.w1.textContent = it.done.slice(ws);
+    it.g1.textContent = it.fin.slice(n, we); it.b.textContent = it.fin.slice(we);
+  }
   function step(){
     if (done) return;
     if (!document.body.contains(box)){ done = true; return; }
     var it = items[i];
-    if (j === 0) it.a.after(caret);
+    if (j === 0) it.w1.after(caret);
     var op = it.ops[j++], ms = 34 + Math.random() * 38;
     if (op[0] === "c"){
       it.done += op[1];
@@ -1025,10 +1034,21 @@ function typeLetter(box, ps, later){
       else if (/[,:;—]/.test(op[1])) ms += 200;
       else if (op[1] === " " && Math.random() < .08) ms += 160;
     }
-    else if (op[0] === "h"){ it.tmp += op[1]; ms += 25; }
-    else if (op[0] === "b"){ it.tmp = it.tmp.slice(0, -1); ms = 32 + Math.random() * 18; }
+    else if (op[0] === "h"){
+      if (!it.tmp){ // не влезает до конца строки — пишем «сомнение» с начала следующей
+        caret.style.left = caret.style.top = "";
+        hes.textContent = op[2];
+        var pr = it.a.parentNode.getBoundingClientRect(), cr = caret.getBoundingClientRect();
+        if (hes.getBoundingClientRect().right > pr.right + 1){
+          caret.style.left = (pr.left - cr.left) + "px";
+          caret.style.top = parseFloat(getComputedStyle(it.a.parentNode).lineHeight) + "px";
+        }
+      }
+      it.tmp += op[1]; ms += 25;
+    }
+    else if (op[0] === "b"){ it.tmp = it.tmp.slice(0, -1); ms = 32 + Math.random() * 18; if (!it.tmp) caret.style.left = caret.style.top = ""; }
     else ms = op[1];
-    it.a.textContent = it.done + it.tmp; it.b.textContent = it.fin.slice(it.done.length);
+    hes.textContent = it.tmp; render(it);
     if (j >= it.ops.length){
       i++; j = 0;
       if (i >= items.length){ timer = setTimeout(finish, 500); return; }
