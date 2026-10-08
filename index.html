@@ -958,7 +958,9 @@ function giftSong(d){
 function showGiftCard(ov, stage, d, g){
   var paras = String(d.text || "").split(/\n\s*\n/).map(function(t){ return el("p",{text:t}); });
   var reply;
-  if (g.preview) reply = el("p",{class:"gift-note",text:"Когда Саша откроет подарок, тебе придёт сообщение в Telegram. Её ответ тоже придёт туда."});
+  if (g.preview) reply = el("p",{class:"gift-note",text: g.opens
+      ? "Саша открывала подарок " + g.opens + " " + (g.opens % 10 >= 2 && g.opens % 10 <= 4 && (g.opens % 100 < 12 || g.opens % 100 > 14) ? "раза" : "раз") + ", последний — " + new Date(g.last).toLocaleString("ru-RU",{timeZone:"Europe/Minsk",day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"}) + ". О каждом открытии и её ответе тебе приходит сообщение в Telegram."
+      : "Когда Саша откроет подарок, тебе придёт сообщение в Telegram — и при каждом следующем открытии тоже. Её ответ тоже придёт туда."});
   else {
     var ta = el("textarea",{id:"gift-reply-text",maxlength:"500",placeholder:"напиши пару слов…"});
     var send = el("button",{type:"button",class:"btn",text:"Ответить Артуру"});
@@ -971,7 +973,7 @@ function showGiftCard(ov, stage, d, g){
         else { send.disabled = false; send.textContent = "Ответить Артуру"; toast(errText(j.error)); }
       });
     });
-    if (!read("kto-gde-gift-" + g.id)){ store("kto-gde-gift-" + g.id, 1); call("giftOpened", {}); }
+    store("kto-gde-gift-" + g.id, 1); call("giftOpened", {});
   }
   var left = [el("figure",{class:"polaroid"},[el("img",{src:d.photo,alt:"Артур и Саша"}), el("figcaption",{text:d.caption || "мы ♡"})])];
   var song = d.youtube && /^[\w-]{6,20}$/.test(d.youtube) ? giftSong(d) : null;
