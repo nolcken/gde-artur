@@ -1001,7 +1001,7 @@ function typeLetter(box, ps, later){
       last = re.lastIndex;
     }
     plain(raw.slice(last));
-    p.textContent = fin;
+    p.textContent = fin; p.style.color = "transparent";
     return { p:p, fin:fin, ops:ops, lines:null, done:"", tmp:"" };
   });
   var hes = el("span",{class:"hes"}), caret = el("i",{class:"caret","aria-hidden":"true"},[hes]);
@@ -1010,7 +1010,7 @@ function typeLetter(box, ps, later){
   function finish(){
     if (done) return; done = true; clearTimeout(timer);
     window.removeEventListener("resize", finish);
-    items.forEach(function(it){ it.p.textContent = it.fin; });
+    items.forEach(function(it){ it.p.textContent = it.fin; it.p.style.color = ""; });
     box.classList.remove("typing"); showLater();
   }
   if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches){ finish(); return; }
@@ -1026,7 +1026,7 @@ function typeLetter(box, ps, later){
       top = t; cur += mm[0];
     }
     if (cur) lines.push(cur);
-    it.p.textContent = "";
+    it.p.textContent = ""; it.p.style.color = "";
     it.lines = lines.map(function(txt){
       var a = el("span"), g = el("span",{class:"ghost",text:txt});
       it.p.appendChild(el("span",{class:"ln"},[a, g]));
