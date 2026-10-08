@@ -283,14 +283,18 @@ footer{font-size:13px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:6px 16p
 .polaroid img{display:block;width:100%;aspect-ratio:1;object-fit:cover;border-radius:3px}
 .polaroid figcaption{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-family:"Caveat",cursive;font-weight:700;font-size:28px;color:#24103A}
  .gift-left{display:grid;gap:22px;align-content:start;min-width:0}
-.song{display:grid;gap:10px;animation:fadeUp .8s .5s cubic-bezier(.2,.8,.2,1) both}
-.song-frame{border-radius:14px;overflow:hidden;background:#000;box-shadow:0 20px 40px -18px rgba(0,0,0,.8);aspect-ratio:16/9;min-height:200px}
+.song{grid-column:1 / -1;display:grid;grid-template-columns:auto minmax(0,1fr);gap:20px;align-items:center;padding:12px;border-radius:22px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);animation:fadeUp .8s .5s cubic-bezier(.2,.8,.2,1) both}
+.song-frame{width:356px;height:200px;border-radius:14px;overflow:hidden;background:#000}
 .song-frame iframe{display:block;width:100%;height:100%;border:0}
-.song-bar{display:flex;align-items:center;gap:10px;min-width:0}
-.song-btn{flex:0 0 auto;width:40px;height:40px;border-radius:50%;border:0;background:#FF2E74;color:#fff;font-size:14px;font-weight:800}
-.song-title{flex:1;min-width:0;font-size:13.5px;font-weight:700;color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.song-side{display:grid;gap:6px;min-width:0}
+.song-kicker{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#FFD84D}
+.song-title{font-family:var(--f-display);font-weight:800;font-size:22px;line-height:1.1;color:#fff}
+.song-artist{font-size:14px;font-weight:600;color:rgba(255,255,255,.7)}
+.song-bar{display:flex;align-items:center;gap:12px;margin-top:6px}
+.song-btn{flex:0 0 auto;width:44px;height:44px;border-radius:50%;border:0;background:#FF2E74;color:#fff;font-size:14px;font-weight:800}
 .song-ico{font-size:14px}
-.song-vol{width:110px;accent-color:#FF2E74}
+.song-vol{width:140px;max-width:100%;accent-color:#FF2E74}
+@media (max-width:720px){ .song{grid-template-columns:minmax(0,1fr);justify-items:center;text-align:center} .song-frame{width:min(356px,100%)} .song-bar{justify-content:center} }
 .letter{display:grid;gap:12px;animation:fadeUp .8s .35s cubic-bezier(.2,.8,.2,1) both}
 .letter h3{margin:0;font-family:var(--f-display);font-weight:800;font-size:clamp(24px,3.6vw,34px);line-height:1.05;color:#FFD84D}
 .letter p{margin:0;font-family:"Caveat",cursive;font-weight:500;font-size:clamp(22px,2.6vw,27px);line-height:1.25;color:#fff}
@@ -928,9 +932,15 @@ function giftSong(d){
   var vol = el("input",{type:"range",min:"0",max:"100",value:"70",class:"song-vol","aria-label":"Громкость"});
   vol.addEventListener("input", function(){ cmd("setVolume", [+vol.value]); if (+vol.value > 0) cmd("unMute"); });
   fr.addEventListener("load", function(){ cmd("setVolume", [70]); cmd("playVideo"); });
+  var parts = String(d.songTitle || "").split(" — ");
   return el("div",{class:"song"},[
     el("div",{class:"song-frame"},[fr]),
-    el("div",{class:"song-bar"},[pp, el("span",{class:"song-title",text:d.songTitle || ""}), el("span",{class:"song-ico","aria-hidden":"true",text:"🔊"}), vol])
+    el("div",{class:"song-side"},[
+      el("div",{class:"song-kicker",text:"Сейчас играет"}),
+      el("div",{class:"song-title",text:parts[1] || parts[0] || ""}),
+      parts[1] ? el("div",{class:"song-artist",text:parts[0]}) : null,
+      el("div",{class:"song-bar"},[pp, el("span",{class:"song-ico","aria-hidden":"true",text:"🔊"}), vol])
+    ])
   ]);
 }
 function showGiftCard(ov, stage, d, g){
@@ -952,10 +962,11 @@ function showGiftCard(ov, stage, d, g){
     if (!read("kto-gde-gift-" + g.id)){ store("kto-gde-gift-" + g.id, 1); call("giftOpened", {}); }
   }
   var left = [el("figure",{class:"polaroid"},[el("img",{src:d.photo,alt:"Артур и Саша"}), el("figcaption",{text:d.caption || "мы ♡"})])];
-  if (d.youtube && /^[\w-]{6,20}$/.test(d.youtube)) left.push(giftSong(d));
+  var song = d.youtube && /^[\w-]{6,20}$/.test(d.youtube) ? giftSong(d) : null;
   var card = el("div",{class:"gift-card"},[
     el("div",{class:"gift-left"},left),
-    el("div",{class:"letter"},[el("h3",{text:d.title || "Для тебя"})].concat(paras, [el("p",{class:"sign",text:d.sign || ""}), reply]))
+    el("div",{class:"letter"},[el("h3",{text:d.title || "Для тебя"})].concat(paras, [el("p",{class:"sign",text:d.sign || ""}), reply])),
+    song
   ]);
   stage.replaceWith(card);
   ov.scrollTop = 0;
