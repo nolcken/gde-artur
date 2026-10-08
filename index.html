@@ -928,7 +928,7 @@ function showGiftCard(ov, stage, d, g){
     if (!read("kto-gde-gift-" + g.id)){ store("kto-gde-gift-" + g.id, 1); call("giftOpened", {}); }
   }
   var card = el("div",{class:"gift-card"},[
-    el("figure",{class:"polaroid"},[el("img",{src:d.photo,alt:"Артур и Саша"}), el("figcaption",{text:"мы ♡"})]),
+    el("figure",{class:"polaroid"},[el("img",{src:d.photo,alt:"Артур и Саша"}), el("figcaption",{text:d.caption || "мы ♡"})]),
     el("div",{class:"letter"},[el("h3",{text:d.title || "Для тебя"})].concat(paras, [el("p",{class:"sign",text:d.sign || ""}), reply]))
   ]);
   stage.replaceWith(card);
