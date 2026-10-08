@@ -8,7 +8,7 @@
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Caveat:wght@500;700&display=swap">
 <style>
 /* Layout: two people side by side everywhere. Hero = two live status cards + "вместе" card; week grid with split cells; day rows pair Артур | Саша; bookings + activity feed below. */
 :root{
@@ -256,6 +256,42 @@ footer{font-size:13px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:6px 16p
   .scrim{place-items:end center;padding:0}
   .modal{width:100%;border-radius:24px 24px 0 0;padding-bottom:calc(22px + env(safe-area-inset-bottom,0px));max-height:88vh}
 }
+/* gift */
+.gift-btn{animation:glow 2s ease-in-out infinite}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(255,46,116,.45)}50%{box-shadow:0 0 0 8px rgba(255,46,116,0)}}
+.gift-ov{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:16px;background:radial-gradient(circle at 50% 40%,#3a1446 0%,#12081c 70%);color:#fff;overflow:auto;animation:fadeIn .35s ease both}
+.gift-ov.closing{animation:fadeOut .25s ease both}
+.gift-close{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:14px;width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font-size:26px;line-height:1;z-index:2}
+.gift-stage{display:grid;justify-items:center;gap:18px;text-align:center;position:relative}
+.gift-kicker{font-family:var(--f-display);font-weight:800;font-size:clamp(24px,5vw,36px);line-height:1.1;max-width:18ch}
+.gift-hint{margin:0;color:rgba(255,255,255,.72);font-weight:600}
+.gift-box{position:relative;width:200px;height:200px;border:0;background:none;padding:0;cursor:pointer;animation:bob 2.2s ease-in-out infinite}
+.gift-box .base{position:absolute;left:12px;right:12px;bottom:0;height:130px;border-radius:14px;background:linear-gradient(90deg,transparent 43%,#FFD84D 43% 57%,transparent 57%),#FF2E74;box-shadow:inset 0 -14px 0 rgba(0,0,0,.14)}
+.gift-box .lid{position:absolute;left:0;right:0;top:44px;height:44px;border-radius:12px;background:linear-gradient(90deg,transparent 43%,#FFD84D 43% 57%,transparent 57%),#FF5C93;box-shadow:0 6px 0 rgba(0,0,0,.12);transition:transform .7s cubic-bezier(.2,.8,.2,1),opacity .7s;z-index:2}
+.gift-box .bow{position:absolute;left:50%;top:0;width:0;height:0}
+.gift-box .bow:before,.gift-box .bow:after{content:"";position:absolute;top:-34px;width:46px;height:36px;border:10px solid #FFD84D;border-radius:50%;box-sizing:border-box}
+.gift-box .bow:before{left:-50px;transform:rotate(-22deg)}.gift-box .bow:after{left:4px;transform:rotate(22deg)}
+.gift-box.shake{animation:shake .45s ease-in-out 2}
+.gift-box.open{animation:none}
+.gift-box.open .lid{transform:translateY(-150px) rotate(-26deg);opacity:0}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-7deg)}75%{transform:rotate(7deg)}}
+.heart{position:absolute;left:50%;top:60%;font-size:var(--s);color:var(--c);pointer-events:none;animation:fly 1.6s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes fly{from{transform:translate(-50%,-50%) scale(.3);opacity:1}to{transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y))) rotate(var(--r)) scale(1);opacity:0}}
+.gift-card{width:min(940px,100%);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:32px;align-items:center;animation:pop .7s cubic-bezier(.2,.8,.2,1) both}
+.polaroid{margin:0;background:#fff;padding:12px 12px 48px;border-radius:6px;box-shadow:0 30px 60px -20px rgba(0,0,0,.75);rotate:-3deg;position:relative;animation:fadeUp .8s .1s cubic-bezier(.2,.8,.2,1) both}
+.polaroid img{display:block;width:100%;aspect-ratio:1;object-fit:cover;border-radius:3px}
+.polaroid figcaption{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-family:"Caveat",cursive;font-weight:700;font-size:28px;color:#24103A}
+.letter{display:grid;gap:12px;animation:fadeUp .8s .35s cubic-bezier(.2,.8,.2,1) both}
+.letter h3{margin:0;font-family:var(--f-display);font-weight:800;font-size:clamp(24px,3.6vw,34px);line-height:1.05;color:#FFD84D}
+.letter p{margin:0;font-family:"Caveat",cursive;font-weight:500;font-size:clamp(22px,2.6vw,27px);line-height:1.25;color:#fff}
+.letter .sign{color:#FF9DBD;text-align:right;font-weight:700}
+.gift-reply{display:grid;gap:8px;margin-top:8px}
+.gift-reply label{font-size:13px;font-weight:700;color:rgba(255,255,255,.72)}
+.gift-reply textarea{width:100%;min-height:76px;border-radius:14px;border:1.5px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:#fff;padding:10px 12px;font:inherit;font-size:15px;resize:vertical}
+.gift-reply .btn{justify-self:start;background:#FF2E74;border-color:#FF2E74;color:#fff}
+.gift-note{font-size:13.5px;color:rgba(255,255,255,.72);margin:0}
+@media (max-width:720px){ .gift-card{grid-template-columns:minmax(0,1fr);gap:22px} .polaroid{width:min(340px,100%);justify-self:center} .gift-ov{place-items:start center;padding-top:72px;padding-bottom:40px} }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -265,6 +301,7 @@ footer{font-size:13px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:6px 16p
 <div id="root" class="wrap root-wrap"><div class="skel" aria-label="Загружаю календарь"><i></i><i></i><i></i></div></div>
 <div class="wrap foot-wrap"><footer><span>Время минское. Каждый правит только своё расписание. Изменения приходят второму в Telegram.</span><span class="mono">обновляется само</span></footer></div>
 <div id="modal-root"></div>
+<div id="gift-root"></div>
 <script src="config.js"></script>
 <script>
 (function(){
@@ -336,7 +373,7 @@ function emptyDays(){ var a = []; for (var d = 0; d < 7; d++) a.push({ note:"", 
 function seed(){ return { version:1, updated:Date.now(), weeks:{}, bookings:[], log:[] }; }
 var S = null;
 var me = read("kto-gde-me");
-var ui = { week:null, sel:null, view:"both", sync: DEMO ? "demo" : "load", lastSync:0, anim:"", pending:0, first:true };
+var ui = { week:null, sel:null, view:"both", sync: DEMO ? "demo" : "load", lastSync:0, anim:"", pending:0, first:true, gift:null, giftAuto:false, giftData:null };
 
 function person(week, who){ var w = S && S.weeks[week]; return (w && w[who]) || { days: emptyDays(), empty:true }; }
 function slotOf(week, who, d, s){ return person(week, who).days[d].slots[s]; }
@@ -393,6 +430,7 @@ function pull(force){
   return fetch(API, { method:"POST", body: JSON.stringify(body) }).then(function(r){ return r.json(); }).then(function(j){
     if (!j.ok && j.error === "bad_code"){ lockOut("Код сменился. Войди заново."); return; }
     if (!j.ok) throw new Error("bad");
+    setGift(j.gift);
     if (ui.pending > 0) return;
     if (j.changed && j.state){ S = j.state; store("kto-gde-cache", S); setSync("ok"); render(); }
     else setSync("ok");
@@ -467,6 +505,7 @@ function header(){
     el("div",{class:"me"},[
       me ? el("div",{class:"mechip"},["Ты: " + NAME[me.who], el("span",{class:"av " + me.who,text:INIT[me.who]}), el("button",{type:"button",class:"btn ghost tiny",onclick:logout,text:"Выйти"})])
          : el("button",{type:"button",class:"btn",onclick:openLogin,text:"Войти"}),
+      me && ui.gift ? el("button",{type:"button",class:"btn pink small gift-btn",onclick:openGift,text:ui.gift.preview ? "🎁 Предпросмотр подарка" : "🎁 Подарок"}) : null,
       syncEl()
     ])
   ]);
@@ -692,7 +731,7 @@ function showModal(title, sub, body){
   mr.appendChild(scrim);
   var f = scrim.querySelector("input,textarea,.opt,.whoPick button"); if (f) f.focus();
 }
-document.addEventListener("keydown", function(e){ if (e.key === "Escape") closeModal(); });
+document.addEventListener("keydown", function(e){ if (e.key === "Escape"){ if (document.querySelector(".gift-ov")) closeGift(); else closeModal(); } });
 
 function openLogin(){
   var sel = me ? me.who : null;
@@ -819,6 +858,81 @@ function respond(b, status, reply){
 function copyPrev(){
   var w = ui.week;
   optimistic("copyWeek", { week:w, from:addDays(w, -7) }, "Расписание перенесено. Поправь, что изменилось");
+}
+
+/* ---------- gift ---------- */
+function setGift(g){
+  var before = JSON.stringify(ui.gift || null), after = JSON.stringify(g || null);
+  ui.gift = g || null;
+  if (before !== after && S) render();
+  if (ui.gift && !ui.gift.preview && !ui.giftAuto && !read("kto-gde-gift-" + ui.gift.id)){ ui.giftAuto = true; setTimeout(openGift, 600); }
+}
+function wait(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+function loadGift(g){
+  if (ui.giftData && ui.giftData.id === g.id) return Promise.resolve(ui.giftData.d);
+  if (!window.crypto || !crypto.subtle) return Promise.reject(new Error("no-crypto"));
+  var raw = Uint8Array.from(atob(g.key), function(c){ return c.charCodeAt(0); });
+  return Promise.all([fetch("surprise.enc?t=" + Date.now()).then(function(r){ if (!r.ok) throw new Error("nofile"); return r.arrayBuffer(); }),
+                      crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["decrypt"])])
+    .then(function(x){ var b = new Uint8Array(x[0]); return crypto.subtle.decrypt({ name:"AES-GCM", iv:b.slice(0,12) }, x[1], b.slice(12)); })
+    .then(function(pt){ var d = JSON.parse(new TextDecoder().decode(pt)); ui.giftData = { id:g.id, d:d }; return d; });
+}
+function burst(host){
+  var colors = ["#FF2E74","#FF9DBD","#FFD84D","#ffffff","#C8B6FF"];
+  for (var i = 0; i < 30; i++){
+    var a = Math.random() * Math.PI * 2, r = 120 + Math.random() * 220;
+    var h = el("span",{class:"heart","aria-hidden":"true",text:"♥",style:"--x:" + Math.round(Math.cos(a) * r) + "px;--y:" + Math.round(Math.sin(a) * r - 80) + "px;--r:" + Math.round(Math.random() * 120 - 60) + "deg;--s:" + (14 + Math.round(Math.random() * 22)) + "px;--c:" + colors[i % colors.length] + ";animation-delay:" + Math.round(Math.random() * 180) + "ms"});
+    host.appendChild(h);
+    (function(h){ setTimeout(function(){ h.remove(); }, 2000); })(h);
+  }
+}
+function closeGift(){
+  var ov = document.querySelector(".gift-ov"); if (!ov) return;
+  ov.classList.add("closing"); setTimeout(function(){ document.getElementById("gift-root").textContent = ""; }, 240);
+}
+function openGift(){
+  var g = ui.gift; if (!g) return;
+  var host = document.getElementById("gift-root"); host.textContent = "";
+  var dataP = loadGift(g); dataP.catch(function(){});
+  var hint = el("p",{class:"gift-hint",text:"Нажми на коробку"});
+  var box = el("button",{type:"button",class:"gift-box","aria-label":"Открыть подарок"},[el("span",{class:"lid"},[el("span",{class:"bow"})]), el("span",{class:"base"})]);
+  var stage = el("div",{class:"gift-stage"},[el("div",{class:"gift-kicker",text: g.preview ? "Предпросмотр: так подарок увидит Саша" : "Кажется, тут что-то оставили для твоих тараканов…"}), box, hint]);
+  var ov = el("div",{class:"gift-ov",role:"dialog","aria-modal":"true","aria-label":"Подарок"},[el("button",{type:"button",class:"gift-close","aria-label":"Закрыть",text:"×",onclick:closeGift}), stage]);
+  host.appendChild(ov);
+  box.focus();
+  box.addEventListener("click", function(){
+    if (box.dataset.busy) return; box.dataset.busy = "1";
+    box.classList.add("shake"); hint.textContent = "Открываю…";
+    Promise.all([dataP, wait(950)]).then(function(r){
+      box.classList.remove("shake"); box.classList.add("open"); burst(stage);
+      setTimeout(function(){ showGiftCard(ov, stage, r[0], g); }, 750);
+    }).catch(function(){ box.classList.remove("shake"); delete box.dataset.busy; hint.textContent = "Не получилось открыть. Обнови страницу и попробуй ещё раз."; });
+  });
+}
+function showGiftCard(ov, stage, d, g){
+  var paras = String(d.text || "").split(/\n\s*\n/).map(function(t){ return el("p",{text:t}); });
+  var reply;
+  if (g.preview) reply = el("p",{class:"gift-note",text:"Когда Саша откроет подарок, тебе придёт сообщение в Telegram. Её ответ тоже придёт туда."});
+  else {
+    var ta = el("textarea",{id:"gift-reply-text",maxlength:"500",placeholder:"напиши пару слов…"});
+    var send = el("button",{type:"button",class:"btn",text:"Ответить Артуру"});
+    reply = el("div",{class:"gift-reply"},[el("label",{for:"gift-reply-text",text:"Ответить Артуру и его тараканам"}), ta, send]);
+    send.addEventListener("click", function(){
+      var t = ta.value.trim(); if (!t){ ta.focus(); return; }
+      send.disabled = true; send.textContent = "Отправляю…";
+      call("giftReply", { text:t }).then(function(j){
+        if (j.ok){ reply.replaceWith(el("p",{class:"gift-note",text:"Отправлено. Артур уже читает 💌"})); }
+        else { send.disabled = false; send.textContent = "Ответить Артуру"; toast(errText(j.error)); }
+      });
+    });
+    if (!read("kto-gde-gift-" + g.id)){ store("kto-gde-gift-" + g.id, 1); call("giftOpened", {}); }
+  }
+  var card = el("div",{class:"gift-card"},[
+    el("figure",{class:"polaroid"},[el("img",{src:d.photo,alt:"Артур и Саша"}), el("figcaption",{text:"мы ♡"})]),
+    el("div",{class:"letter"},[el("h3",{text:d.title || "Для тебя"})].concat(paras, [el("p",{class:"sign",text:d.sign || ""}), reply]))
+  ]);
+  stage.replaceWith(card);
+  ov.scrollTop = 0;
 }
 
 /* ---------- music (outside #root so re-renders never restart the player) ---------- */
