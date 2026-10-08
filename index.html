@@ -282,6 +282,15 @@ footer{font-size:13px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:6px 16p
 .polaroid{margin:0;background:#fff;padding:12px 12px 48px;border-radius:6px;box-shadow:0 30px 60px -20px rgba(0,0,0,.75);rotate:-3deg;position:relative;animation:fadeUp .8s .1s cubic-bezier(.2,.8,.2,1) both}
 .polaroid img{display:block;width:100%;aspect-ratio:1;object-fit:cover;border-radius:3px}
 .polaroid figcaption{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-family:"Caveat",cursive;font-weight:700;font-size:28px;color:#24103A}
+ .gift-left{display:grid;gap:22px;align-content:start;min-width:0}
+.song{display:grid;gap:10px;animation:fadeUp .8s .5s cubic-bezier(.2,.8,.2,1) both}
+.song-frame{border-radius:14px;overflow:hidden;background:#000;box-shadow:0 20px 40px -18px rgba(0,0,0,.8);aspect-ratio:16/9;min-height:200px}
+.song-frame iframe{display:block;width:100%;height:100%;border:0}
+.song-bar{display:flex;align-items:center;gap:10px;min-width:0}
+.song-btn{flex:0 0 auto;width:40px;height:40px;border-radius:50%;border:0;background:#FF2E74;color:#fff;font-size:14px;font-weight:800}
+.song-title{flex:1;min-width:0;font-size:13.5px;font-weight:700;color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.song-ico{font-size:14px}
+.song-vol{width:110px;accent-color:#FF2E74}
 .letter{display:grid;gap:12px;animation:fadeUp .8s .35s cubic-bezier(.2,.8,.2,1) both}
 .letter h3{margin:0;font-family:var(--f-display);font-weight:800;font-size:clamp(24px,3.6vw,34px);line-height:1.05;color:#FFD84D}
 .letter p{margin:0;font-family:"Caveat",cursive;font-weight:500;font-size:clamp(22px,2.6vw,27px);line-height:1.25;color:#fff}
@@ -909,6 +918,21 @@ function openGift(){
     }).catch(function(){ box.classList.remove("shake"); delete box.dataset.busy; hint.textContent = "Не получилось открыть. Обнови страницу и попробуй ещё раз."; });
   });
 }
+function giftSong(d){
+  var src = "https://www.youtube.com/embed/" + d.youtube + "?autoplay=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1&origin=" + encodeURIComponent(location.origin);
+  var fr = el("iframe",{src:src,title:d.songTitle || "Песня",allow:"autoplay; encrypted-media; picture-in-picture",referrerpolicy:"strict-origin-when-cross-origin",allowfullscreen:true});
+  var playing = true;
+  function cmd(func, args){ try { fr.contentWindow.postMessage(JSON.stringify({ event:"command", func:func, args:args || [] }), "*"); } catch (e){} }
+  var pp = el("button",{type:"button",class:"song-btn","aria-label":"Пауза",text:"❚❚"});
+  pp.addEventListener("click", function(){ playing = !playing; cmd(playing ? "playVideo" : "pauseVideo"); pp.textContent = playing ? "❚❚" : "▶"; pp.setAttribute("aria-label", playing ? "Пауза" : "Играть"); });
+  var vol = el("input",{type:"range",min:"0",max:"100",value:"70",class:"song-vol","aria-label":"Громкость"});
+  vol.addEventListener("input", function(){ cmd("setVolume", [+vol.value]); if (+vol.value > 0) cmd("unMute"); });
+  fr.addEventListener("load", function(){ cmd("setVolume", [70]); cmd("playVideo"); });
+  return el("div",{class:"song"},[
+    el("div",{class:"song-frame"},[fr]),
+    el("div",{class:"song-bar"},[pp, el("span",{class:"song-title",text:d.songTitle || ""}), el("span",{class:"song-ico","aria-hidden":"true",text:"🔊"}), vol])
+  ]);
+}
 function showGiftCard(ov, stage, d, g){
   var paras = String(d.text || "").split(/\n\s*\n/).map(function(t){ return el("p",{text:t}); });
   var reply;
@@ -927,8 +951,10 @@ function showGiftCard(ov, stage, d, g){
     });
     if (!read("kto-gde-gift-" + g.id)){ store("kto-gde-gift-" + g.id, 1); call("giftOpened", {}); }
   }
+  var left = [el("figure",{class:"polaroid"},[el("img",{src:d.photo,alt:"Артур и Саша"}), el("figcaption",{text:d.caption || "мы ♡"})])];
+  if (d.youtube && /^[\w-]{6,20}$/.test(d.youtube)) left.push(giftSong(d));
   var card = el("div",{class:"gift-card"},[
-    el("figure",{class:"polaroid"},[el("img",{src:d.photo,alt:"Артур и Саша"}), el("figcaption",{text:d.caption || "мы ♡"})]),
+    el("div",{class:"gift-left"},left),
     el("div",{class:"letter"},[el("h3",{text:d.title || "Для тебя"})].concat(paras, [el("p",{class:"sign",text:d.sign || ""}), reply]))
   ]);
   stage.replaceWith(card);
