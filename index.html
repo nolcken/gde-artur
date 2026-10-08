@@ -300,14 +300,14 @@ footer{font-size:13px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:6px 16p
 @media (max-width:720px){ .song{grid-template-columns:minmax(0,1fr);justify-items:center;text-align:center} .song-frame{width:min(356px,100%)} .song-bar{justify-content:center} }
 .letter{display:grid;gap:12px;animation:fadeUp .8s .35s cubic-bezier(.2,.8,.2,1) both}
 .letter h3{margin:0;font-family:var(--f-display);font-weight:800;font-size:clamp(24px,3.6vw,34px);line-height:1.05;color:#FFD84D}
-.letter p{margin:0;font-family:"Caveat",cursive;font-weight:500;font-size:clamp(26px,3vw,32px);line-height:1.22;color:#fff}
+.letter p{margin:0;font-family:"Caveat",cursive;font-weight:500;font-size:clamp(22px,2.6vw,27px);line-height:1.25;color:#fff}
 .letter .ghost{color:transparent}
 .letter .caret{display:inline-block;width:2px;height:.85em;margin:0 1px -.08em;background:#FF9DBD;border-radius:2px;animation:caret .9s steps(1) infinite}
 @keyframes caret{50%{opacity:0}}
 .letter .later{opacity:0;transform:translateY(8px);transition:opacity .9s ease,transform .9s cubic-bezier(.2,.8,.2,1)}
 .letter .later.on{opacity:1;transform:none}
 .letter.typing{cursor:pointer}
-.letter .sign{color:#FF9DBD;text-align:right;font-weight:700;font-size:clamp(28px,3.2vw,34px)}
+.letter .sign{color:#FF9DBD;text-align:right;font-weight:700}
 .gift-reply{display:grid;gap:8px;margin-top:8px}
 .gift-reply label{font-size:13px;font-weight:700;color:rgba(255,255,255,.72)}
 .gift-reply textarea{width:100%;min-height:76px;border-radius:14px;border:1.5px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:#fff;padding:10px 12px;font:inherit;font-size:15px;resize:vertical}
@@ -984,17 +984,29 @@ function showGiftCard(ov, stage, d, g){
 }
 /* письмо «пишется» на глазах; тап по письму — дописать сразу */
 function typeLetter(box, ps, later){
+  // [[текст]] в письме — «сомнение»: пишется, пауза, стирается
   var items = ps.map(function(p){
-    var t = p.textContent, a = el("span"), b = el("span",{class:"ghost",text:t});
+    var raw = p.textContent, fin = raw.replace(/\[\[[^\]]*\]\]/g, ""), ops = [], re = /\[\[([^\]]*)\]\]/g, last = 0, m;
+    function plain(str){ for (var k = 0; k < str.length; k++) ops.push(["c", str.charAt(k), str.charAt(k + 1)]); }
+    while ((m = re.exec(raw))){
+      plain(raw.slice(last, m.index));
+      for (var k = 0; k < m[1].length; k++) ops.push(["h", m[1].charAt(k)]);
+      ops.push(["w", 1100]);
+      for (var k2 = 0; k2 < m[1].length; k2++) ops.push(["b"]);
+      ops.push(["w", 450]);
+      last = re.lastIndex;
+    }
+    plain(raw.slice(last));
+    var a = el("span"), b = el("span",{class:"ghost",text:fin});
     p.textContent = ""; p.appendChild(a); p.appendChild(b);
-    return { t:t, a:a, b:b };
+    return { fin:fin, ops:ops, a:a, b:b, done:"", tmp:"" };
   });
   var caret = el("i",{class:"caret","aria-hidden":"true"});
   var i = 0, j = 0, done = false, timer = null;
   function showLater(){ later.forEach(function(x, k){ if (x) setTimeout(function(){ x.classList.add("on"); }, 250 + k * 700); }); }
   function finish(){
     if (done) return; done = true; clearTimeout(timer);
-    items.forEach(function(it){ it.a.textContent = it.t; it.b.textContent = ""; });
+    items.forEach(function(it){ it.a.textContent = it.fin; it.b.textContent = ""; });
     if (caret.parentNode) caret.remove();
     box.classList.remove("typing"); showLater();
   }
@@ -1006,13 +1018,18 @@ function typeLetter(box, ps, later){
     if (!document.body.contains(box)){ done = true; return; }
     var it = items[i];
     if (j === 0) it.a.after(caret);
-    j++;
-    it.a.textContent = it.t.slice(0, j); it.b.textContent = it.t.slice(j);
-    var ch = it.t.charAt(j - 1), nx = it.t.charAt(j), ms = 34 + Math.random() * 38;
-    if (/[.!?…]/.test(ch) && !/[.!?…)]/.test(nx)) ms += 420;
-    else if (/[,:;—]/.test(ch)) ms += 200;
-    else if (ch === " " && Math.random() < .08) ms += 160;
-    if (j >= it.t.length){
+    var op = it.ops[j++], ms = 34 + Math.random() * 38;
+    if (op[0] === "c"){
+      it.done += op[1];
+      if (/[.!?…]/.test(op[1]) && !/[.!?…)]/.test(op[2] || "")) ms += 420;
+      else if (/[,:;—]/.test(op[1])) ms += 200;
+      else if (op[1] === " " && Math.random() < .08) ms += 160;
+    }
+    else if (op[0] === "h"){ it.tmp += op[1]; ms += 25; }
+    else if (op[0] === "b"){ it.tmp = it.tmp.slice(0, -1); ms = 32 + Math.random() * 18; }
+    else ms = op[1];
+    it.a.textContent = it.done + it.tmp; it.b.textContent = it.fin.slice(it.done.length);
+    if (j >= it.ops.length){
       i++; j = 0;
       if (i >= items.length){ timer = setTimeout(finish, 500); return; }
       ms = i === items.length - 1 ? 1500 : 800;
