@@ -91,7 +91,7 @@ function cropInfo(crop, ts, roomId){
 }
 
 /* ---------- день: задания, заказы, серия ---------- */
-var NEIGHBORS = ["Таракан Гоша", "Бабушка Тараканиха", "Таракан-студент Петя", "Соседка Люся", "Таракан-шеф Жорж", "Близнецы Усачи", "Тётушка Плюша", "Дедушка Шуршун"];
+var NEIGHBORS = ["Мишка Гоша", "Бабушка Медведица", "Мишка-студент Петя", "Соседка Люся", "Мишка-шеф Жорж", "Близнецы Топтыжки", "Тётушка Плюша", "Дедушка Косолап"];
 function hasFn(h, fn){ var ok = false; Object.keys(h.rooms).forEach(function(r){ h.rooms[r].items.forEach(function(p){ if (ITEM[p.i] && ITEM[p.i].fn === fn) ok = true; }); }); return ok; }
 function goodsPool(h){
   var L = level(h), pool = [];
@@ -325,7 +325,7 @@ function apply(h, op){
       return { ok:true };
     }
     case "hunt": {
-      var P15 = pl(h, who), d15 = dk(ts); if (P15.hunt === d15) return E("Тараканы уже спрятались до завтра");
+      var P15 = pl(h, who), d15 = dk(ts); if (P15.hunt === d15) return E("Мишки уже спрятались до завтра");
       P15.hunt = d15; var fnd = Math.max(0, Math.min(5, a.found | 0));
       h.coins += fnd * 12; if (fnd === 5){ h.hearts += 1; h.stats.huntPerfect++; }
       h.stats.hunts++; cnt(h, ts, "hunt"); return { ok:true, coins:fnd * 12 };

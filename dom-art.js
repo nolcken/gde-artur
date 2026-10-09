@@ -144,7 +144,7 @@ function renderPrims(prims, X, Y, r){
 }
 
 /* ---------- маленькие персонажи ---------- */
-function roach(u, v, z, s, o){
+function roachOld(u, v, z, s, o){
   o = o || {}; s = s || 1;
   var c = o.c || "#7a4a2b", out = [
     Ln([u - .12 * s, v - .02 * s, z + .02], [u - .2 * s, v - .12 * s, z], "#3b2416", 1.1 * s),
@@ -161,6 +161,25 @@ function roach(u, v, z, s, o){
   ];
   if (o.crown) out.push(Pl([[u - .06 * s, v - .17 * s, z + .17 * s],[u + .06 * s, v - .17 * s, z + .17 * s],[u + .07 * s, v - .17 * s, z + .27 * s],[u + .02 * s, v - .17 * s, z + .21 * s],[u, v - .17 * s, z + .29 * s],[u - .02 * s, v - .17 * s, z + .21 * s],[u - .07 * s, v - .17 * s, z + .27 * s]], "#FFD84D", { k:o.k != null ? o.k + .005 : undefined }));
   if (o.bow) out.push(Pl([[u - .07 * s, v - .1 * s, z + .1 * s],[u, v - .1 * s, z + .07 * s],[u + .07 * s, v - .1 * s, z + .1 * s],[u + .07 * s, v - .1 * s, z + .02 * s],[u, v - .1 * s, z + .05 * s],[u - .07 * s, v - .1 * s, z + .02 * s]], o.bow));
+  return out;
+}
+/* плюшевый мишка: u,v — где стоит, s — масштаб; смотрит на зрителя */
+function bear(u, v, z, s, o){
+  o = o || {}; s = s || 1;
+  var c = o.c || "#C68A5A", L = lt(c, .42), K = "#3b2416", out = [];
+  function at(dx){ return [u + dx * s / 2, v - dx * s / 2]; }
+  function S2(dx, zz, r, col, op){ var q = at(dx); return Sp(q[0], q[1], z + zz * s, r * s, col, op); }
+  out.push(S2(-.08, .43, .045, c), S2(.08, .43, .045, c), S2(-.08, .43, .022, "#FFB3CF", { flat:true }), S2(.08, .43, .022, "#FFB3CF", { flat:true }));
+  out.push(S2(-.06, .035, .045, c), S2(.06, .035, .045, c));
+  out.push(S2(0, .145, .115, c), S2(0, .125, .065, L, { flat:true }));
+  out.push(S2(-.115, .17, .042, c), S2(.115, .17, .042, c));
+  out.push(S2(0, .34, .105, c));
+  out.push(S2(0, .305, .048, L, { flat:true }), S2(0, .322, .017, K, { flat:true }));
+  out.push(S2(-.042, .365, .014, K, { flat:true }), S2(.042, .365, .014, K, { flat:true }));
+  out.push(S2(-.068, .318, .016, "#FF9DBD", { flat:true, op:.8 }), S2(.068, .318, .016, "#FF9DBD", { flat:true, op:.8 }));
+  if (o.bow) out.push(S2(-.035, .245, .026, o.bow, { flat:true }), S2(.035, .245, .026, o.bow, { flat:true }), S2(0, .245, .014, dk(o.bow, .25), { flat:true }));
+  if (o.crown){ var cp = [[-.065,.43],[.065,.43],[.075,.54],[.035,.49],[0,.56],[-.035,.49],[-.075,.54]].map(function(p){ var q = at(p[0]); return [q[0], q[1], z + p[1] * s]; }); out.push(Pl(cp, "#FFD84D")); }
+  if (o.k != null) out.forEach(function(p){ p.o.k = (p.o.k || 0) + o.k; });
   return out;
 }
 function heartPts(u, v, z, s, plane){
@@ -384,16 +403,16 @@ D.toilet = function(){ return [B(.25, .08, .3, .5, .24, .5, WHITE), Cy(.5, .55, 
 D.bath_sink = function(c){ return [Cy(.5, .45, 0, .1, .72, WHITE), B(.14, .14, .72, .72, .56, .14, c), Fl(.24, .24, .865, .52, .36, "#cfe8ff", { k:310 }), B(.46, .14, .86, .08, .08, .2, METAL), B(.46, .14, 1.02, .08, .18, .04, METAL)]; };
 D.washer = function(c){ return [B(.08, .1, 0, .84, .76, .9, c), Ve(.5, .861, .42, .26, .26, "#cfd3e6"), Ve(.5, .862, .42, .19, .19, "#6EA8FF", { k:.1, cls:"spin" }), B(.15, .861, .76, .3, .01, .08, "#2b2838"), Sp(.75, .86, .8, .03, "#3FC7B4", { flat:true })]; };
 D.duck = function(c){ c = c || "#FFD84D"; return [Sp(.5, .55, .12, .14, c), Sp(.42, .48, .3, .09, c, { k:.2 }), Pl([[.34,.5,.3],[.26,.52,.28],[.34,.52,.26]], "#FF8A3D", { k:.3 }), Sp(.4, .52, .34, .015, "#24103A", { flat:true, k:.31 })]; };
-/* — тараканий штаб — */
+/* — мишкин штаб — */
 D.roach_table = function(c){ return [].concat(legs4(.2, .2, 1.8, .8, .45, WOOD_D, .06), [B(.12, .12, .45, 1.76, .76, .06, c), Fl(.6, .3, .515, .8, .4, "#FBF7F2", { k:500 }), Ln([.7, .4, .52], [1.3, .55, .52], "#FF4F8B", 1, { k:501 }), Pl(heartPts(1.3, .5, .52, .06, "floor"), "#FF4F8B", { k:502, stroke:false })],
-  roach(.35, .5, .51, .7, { k:510 }), roach(1.65, .5, .51, .7, { k:510 }), roach(1, .75, .51, .7, { k:511, bow:"#9B7BFF" })); };
+  bear(.35, .5, .51, .7, { k:510 }), bear(1.65, .5, .51, .7, { k:510 }), bear(1, .75, .51, .7, { k:511, bow:"#9B7BFF" })); };
 D.roach_bunk = function(c){ return [B(.15, .2, 0, .7, .6, .06, c), B(.15, .2, .45, .7, .6, .06, c), B(.15, .2, 0, .06, .06, .9, WOOD_D), B(.79, .2, 0, .06, .06, .9, WOOD_D), B(.15, .74, 0, .06, .06, .9, WOOD_D), B(.79, .74, 0, .06, .06, .9, WOOD_D),
-  Fl(.2, .25, .065, .6, .5, "#FFB3CF", { k:600 }), Fl(.2, .25, .515, .6, .5, "#C9B6FF", { k:601 })].concat(roach(.5, .5, .07, .55, { k:600.5 }), roach(.5, .5, .52, .55, { k:601.5 }), [Tx(.7, .4, .95, "z", 8, "#9B7BFF", { cls:"zz", k:700 })]); };
+  Fl(.2, .25, .065, .6, .5, "#FFB3CF", { k:600 }), Fl(.2, .25, .515, .6, .5, "#C9B6FF", { k:601 })].concat(bear(.5, .5, .07, .55, { k:600.5 }), bear(.5, .5, .52, .55, { k:601.5 }), [Tx(.7, .4, .95, "z", 8, "#9B7BFF", { cls:"zz", k:700 })]); };
 D.roach_throne = function(c){ return [B(.15, .15, 0, .7, .7, .3, "#FFC23D"), B(.15, .1, .3, .7, .14, .95, "#FFC23D"), B(.22, .24, .3, .56, .56, .08, c), Sp(.2, .12, 1.3, .06, "#FF4F8B", { flat:true }), Sp(.8, .12, 1.3, .06, "#FF4F8B", { flat:true }), Sp(.5, .12, 1.32, .07, "#6EA8FF", { flat:true })]
-  .concat(roach(.5, .55, .38, 1.1, { k:800, crown:true })); };
+  .concat(bear(.5, .55, .38, 1.1, { k:800, crown:true })); };
 D.plan_board = function(){ return [Ln([.3, .7, 0], [.4, .5, 1.3], WOOD_D, 2), Ln([.7, .7, 0], [.6, .5, 1.3], WOOD_D, 2), Ln([.5, .3, 0], [.5, .48, 1.3], WOOD_D, 2),
   vertRect(.12, .88, .52, .55, 1.4, "#FBF7F2", { k:1 }), Pl(heartPts(.62, .53, 1.0, .12), "#FF4F8B", { k:2, stroke:false }), Ln([.22, .53, .7], [.52, .53, .95], "#24103A", 1, { k:2 }),
-  Tx(.36, .53, 1.22, "ОПЕРАЦИЯ «САША»", 5, "#24103A", { k:3, plane:"wall" }), Ln([.2, .53, .65], [.35, .53, .78], "#9B7BFF", 1, { k:2 })].concat(roach(.5, .9, 0, .5, { k:5 })); };
+  Tx(.36, .53, 1.22, "ОПЕРАЦИЯ «САША»", 5, "#24103A", { k:3, plane:"wall" }), Ln([.2, .53, .65], [.35, .53, .78], "#9B7BFF", 1, { k:2 })].concat(bear(.5, .9, 0, .5, { k:5 })); };
 /* — на стену (u — вдоль стены, v — от стены) — */
 D.window = function(c, seed, ctx){ var sky = ctx && ctx.night ? "#1d2350" : "#9fd8ff"; return [
   B(.08, 0, .7, .84, .08, 1.12, WHITE), vertRect(.14, .86, .081, .76, 1.76, sky, { sw:.4, cls:ctx && ctx.night ? "nightsky" : "" }),
@@ -475,7 +494,7 @@ D.gazebo = function(c){ var o = [Cy(1.5, 1.5, 0, 1.4, .14, "#E7CFA9", 1.4)];
   var ap = [1.5, 1.5, 2.6]; o.push(Pl([[.1,2.9,1.74],[2.9,2.9,1.74],ap], dk(c, .1), { k:200 })); o.push(Pl([[2.9,.1,1.74],[2.9,2.9,1.74],ap], dk(c, .25), { k:200 }));
   for (var i = 0; i < 10; i++){ var t = i / 9; o.push(Sp(.1 + t * 2.8, 2.9, 1.7, .03, "#FFD84D", { flat:true, k:201, cls:"bulb" })); }
   o.push(Gl(1.5, 1.5, 1.2, 2, "warm")); return o; };
-D.scarecrow = function(c){ return [B(.47, .47, 0, .06, .06, 1.2, WOOD_D), B(.1, .47, .9, .8, .06, .06, WOOD_D), B(.3, .42, .55, .4, .16, .45, c)].concat(roach(.5, .45, 1.0, 1.4, { k:5 }), [Cy(.5, .38, 1.45, .2, .03, "#E8C26A", .2, { k:6 }), Cy(.5, .38, 1.48, .12, .14, "#E8C26A", .1, { k:6.1 })]); };
+D.scarecrow = function(c){ return [B(.47, .47, 0, .06, .06, 1.2, WOOD_D), B(.1, .47, .9, .8, .06, .06, WOOD_D), B(.3, .42, .55, .4, .16, .45, c)].concat(bear(.5, .45, 1.0, 1.4, { k:5 }), [Cy(.5, .45, 1.62, .2, .03, "#E8C26A", .2, { k:6 }), Cy(.5, .45, 1.65, .12, .14, "#E8C26A", .1, { k:6.1 })]); };
 D.mailbox = function(c){ return [B(.47, .47, 0, .06, .06, .8, WOOD_D), B(.3, .3, .8, .4, .4, .26, c), Cy(.5, .5, 1.03, .2, .02, c), B(.68, .48, .95, .03, .04, .25, "#FF4F8B")]; };
 
 /* ---------- культуры ---------- */
@@ -600,7 +619,7 @@ function roomSVG(room, opts){
 window.ART = {
   TW:TW, TH:TH, ZH:ZH, P:P, poly:poly, pts:pts, mix:mix, lt:lt, dk:dk, rnd:rnd, hash:hash,
   B:B, Cy:Cy, Sp:Sp, Fl:Fl, El:El, Pl:Pl, Ve:Ve, Ln:Ln, Tx:Tx, Gl:Gl,
-  renderPrims:renderPrims, roach:roach, heartPts:heartPts, D:D, COLS:COLS, FLOORS:FLOORS, WALLS:WALLS,
+  renderPrims:renderPrims, bear:bear, roach:bear, heartPts:heartPts, D:D, COLS:COLS, FLOORS:FLOORS, WALLS:WALLS,
   roomSVG:roomSVG, cropPrims:cropPrims, CROP_ART:CROP_ART, floorTile:floorTile
 };
 })();

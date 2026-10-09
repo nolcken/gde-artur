@@ -118,7 +118,7 @@ function sceneSVG(){
   if (S.mode === "edit" && S.sel){ var fs = CO.findItem(h, S.sel); if (fs && ITEM[fs.p.i].k !== "wall"){ var rc = CO.rectOf(fs.p); body += tilePoly(rc.x0, rc.y0, rc.x1 - rc.x0, rc.y1 - rc.y0, "#FF2E74", .25); } }
   if (S.hunt) S.hunt.roaches.forEach(function(r, i){ if (!r.found) floors.push({ roach:i, rect:{ x0:r.x, y0:r.y, x1:r.x + .3, y1:r.y + .3 }, r:r }); });
   function drawOne(o){
-    if (o.roach != null){ var rp = A.renderPrims(A.roach(o.r.x + .15, o.r.y + .15, o.r.z || 0, .55, { c:"#6b3d22" }), 0, 0, o.r.rot); return '<g class="roach-hit" data-roach="' + o.roach + '">' + rp.body + '</g>'; }
+    if (o.roach != null){ var rp = A.renderPrims(A.bear(o.r.x + .15, o.r.y + .15, o.r.z || 0, 1, { c:["#C68A5A", "#FFB3CF", "#C9B6FF", "#9BE3D6", "#FFE08A"][o.roach % 5], bow:o.roach % 2 ? "#FF4F8B" : null }), 0, 0, 0); return '<g class="roach-hit" data-roach="' + o.roach + '">' + rp.body + '</g>'; }
     var p = o.p, pl = placement(p), res = A.renderPrims(itemPrims(p, o.ghost ? ctx0 : null), pl[0], pl[1], pl[2]);
     if (!o.ghost) glow += res.glow;
     var extra = "";
@@ -214,7 +214,7 @@ function interact(u, e){
 
 /* ---------- каркас страницы ---------- */
 function mascotSVG(size, crown){
-  var r = A.renderPrims(A.roach(.5, .55, 0, 1.6, { crown:crown !== false, bow:"#FF2E74" }), 0, 0, 0);
+  var r = A.renderPrims(A.bear(.5, .5, 0, 1.7, { crown:crown !== false, bow:"#FF2E74" }), 0, 0, 0);
   return '<svg width="' + size + '" height="' + size + '" viewBox="-21 -9 40 38">' + r.body + "</svg>";
 }
 function render(){
@@ -259,7 +259,7 @@ function renderDock(){
     b("📬", "Почта", openMail, mail),
     CO.hasFn(h, "pond") ? b("🎣", "Рыбалка", openFish) : null,
     CO.hasFn(h, "stove") ? b("🍳", "Кухня", openCook) : null,
-    b("🪳", "Прятки", startHunt),
+    b("🧸", "Прятки", startHunt),
     b("📰", "Лента", openLog)
   ]);
   document.body.appendChild(dock);
@@ -291,7 +291,7 @@ function editBar(){
   } else kids = [el("span", { text:"Нажми на вещь, чтобы её двигать" }), el("button", { text:"🎒 Склад", onclick:function(){ openBag("furn"); } }), el("button", { class:"ok", text:"Готово", onclick:toggleEdit })];
   return el("div", { class:"editbar", id:"editbar" }, kids);
 }
-function levelUp(L){ sheet("🎉 Уровень " + L + "!", function(box){ box.appendChild(el("div", { class:"qcard" }, [el("span", { class:"face", html:mascotSVG(66) }), el("div", null, [el("h3", { text:"Дом подрос до " + L + "-го уровня" }), el("p", { text:"Теперь в магазине больше вещей. Тараканы аплодируют всеми шестью лапками!" })])])); box.appendChild(el("button", { class:"btn full", style:"margin-top:12px", text:"Ура!", onclick:closeSheet })); }); }
+function levelUp(L){ sheet("🎉 Уровень " + L + "!", function(box){ box.appendChild(el("div", { class:"qcard" }, [el("span", { class:"face", html:mascotSVG(66) }), el("div", null, [el("h3", { text:"Дом подрос до " + L + "-го уровня" }), el("p", { text:"Теперь в магазине больше вещей. Мишки аплодируют плюшевыми лапками!" })])])); box.appendChild(el("button", { class:"btn full", style:"margin-top:12px", text:"Ура!", onclick:closeSheet })); }); }
 
 /* ---------- листы ---------- */
 function sheet(title, build){
@@ -419,7 +419,7 @@ function openBag(tab){
     box.appendChild(el("div", { class:"list" }, ks.map(function(k){
       var g = CO.goodInfo(k); if (!g) return null;
       return el("div", { class:"li" }, [el("span", { class:"em", text:g.e }), el("div", { class:"bd" }, [el("b", { text:g.n + " ×" + h.bag[k] }), el("small", { text:g.kind + (g.sell ? " · продажа 🪙 " + g.sell : "") })]),
-        g.stars ? el("button", { class:"btn yellow", text:"💝 Угостить", title:"Угостить вторую половинку: +" + g.stars + " 💗", onclick:function(){ var r = act("gift", { k:k }); if (r) toast("Тараканы растроганы: +" + r.hearts + " 💗"); } }) : null,
+        g.stars ? el("button", { class:"btn yellow", text:"💝 Угостить", title:"Угостить вторую половинку: +" + g.stars + " 💗", onclick:function(){ var r = act("gift", { k:k }); if (r) toast("Мишки растроганы: +" + r.hearts + " 💗"); } }) : null,
         g.sell ? el("button", { class:"btn soft", text:"Продать", onclick:function(){ act("sell", { k:k, n:1 }); } }) : null,
         g.sell && h.bag[k] > 1 ? el("button", { class:"btn soft", text:"Все", onclick:function(){ act("sell", { k:k, n:h.bag[k] }); } }) : null]);
     })));
@@ -478,8 +478,8 @@ function openQuests(){
     box.appendChild(el("div", { class:"list" }, h.orders.list.map(function(o, i){
       var ok = Object.keys(o.need).every(function(k){ return CO.have(h, k) >= o.need[k]; });
       var needTxt = Object.keys(o.need).map(function(k){ var g = k === "fish" ? { e:"🐟", n:"рыба" } : CO.goodInfo(k.split(":").length === 2 && k.indexOf("d:") === 0 ? k + ":1" : k) || { e:"?", n:k }; return (g.e || "") + " " + g.n.replace(/ ★+$/, "") + " " + CO.have(h, k) + "/" + o.need[k]; }).join(" · ");
-      return el("div", { class:"li" + (o.done ? " done" : "") }, [el("span", { class:"em", text:o.done ? "✅" : "🪳" }), el("div", { class:"bd" }, [el("b", { text:o.who }), el("small", { text:needTxt + " → " + money(o.coins, o.hearts) })]),
-        o.done ? null : el("button", { class:"btn", text:"Отдать", disabled:!ok, onclick:function(){ if (act("order", { i:i })) toast(o.who + ": «Спасибо!» 🪳💗"); } })]);
+      return el("div", { class:"li" + (o.done ? " done" : "") }, [el("span", { class:"em", text:o.done ? "✅" : "🧸" }), el("div", { class:"bd" }, [el("b", { text:o.who }), el("small", { text:needTxt + " → " + money(o.coins, o.hearts) })]),
+        o.done ? null : el("button", { class:"btn", text:"Отдать", disabled:!ok, onclick:function(){ if (act("order", { i:i })) toast(o.who + ": «Спасибо!» 🧸💗"); } })]);
     })));
   });
 }
@@ -620,7 +620,7 @@ function openCook(){
           var stars = Math.max(1, Math.min(3, Math.round(score)));
           act("cook", { rec:r.id, stars:stars }, true);
           holder.innerHTML = ""; t.textContent = r.n + " " + "★★★".slice(0, stars) + "☆☆☆".slice(0, 3 - stars);
-          box.appendChild(el("p", { class:"center tip", text:stars === 3 ? "Идеально! Тараканы рыдают от восторга" : stars === 2 ? "Очень вкусно!" : "Съедобно. В следующий раз получится лучше" }));
+          box.appendChild(el("p", { class:"center tip", text:stars === 3 ? "Идеально! Мишки в полном восторге" : stars === 2 ? "Очень вкусно!" : "Съедобно. В следующий раз получится лучше" }));
           box.appendChild(el("div", { style:"display:flex;gap:8px" }, [el("button", { class:"btn soft full", text:"К рецептам", onclick:list }), el("button", { class:"btn full", text:"Готово", onclick:close })]));
         });
       }
@@ -629,10 +629,10 @@ function openCook(){
     list();
   });
 }
-/* — тараканьи прятки — */
+/* — прятки с мишками — */
 function startHunt(){
   var h = H(), P = h.pl[me.who] || {};
-  if (P.hunt === CO.dk(now())) return toast("Тараканы уже спрятались до завтра 🪳");
+  if (P.hunt === CO.dk(now())) return toast("Мишки уже спрятались до завтра 🧸");
   if (S.mode === "edit") toggleEdit();
   var room = DD.ROOM[S.room], R = h.rooms[S.room], spots = [];
   // прячутся у вещей: рядом и под ними
@@ -641,10 +641,10 @@ function startHunt(){
   spots.sort(function(){ return Math.random() - .5; });
   S.hunt = { roaches:spots.slice(0, 5).map(function(s){ return { x:s.x, y:s.y, z:s.z, rot:Math.random() < .5 ? 1 : 0, found:false }; }), end:Date.now() + 40000, room:S.room };
   S.huntTimer = setInterval(function(){ if (!S.hunt) return clearInterval(S.huntTimer); var hb = document.getElementById("huntbar"); if (hb) hb.replaceWith(huntBar()); if (Date.now() > S.hunt.end) endHunt(); }, 250);
-  render(); toast("Найди 5 тараканов за 40 секунд! 🪳");
+  render(); toast("Найди 5 мишек за 40 секунд! 🧸");
 }
 function huntBar(){ var hu = S.hunt, f = hu.roaches.filter(function(r){ return r.found; }).length, left = Math.max(0, hu.end - Date.now());
-  return el("div", { class:"huntbar", id:"huntbar" }, ["🪳 " + f + "/5", el("div", { class:"prog" }, [el("i", { style:"width:" + (left / 400) + "%" })]), Math.ceil(left / 1000) + " с", el("button", { class:"btn soft", style:"padding:4px 10px", text:"Сдаюсь", onclick:function(){ endHunt(); } })]); }
+  return el("div", { class:"huntbar", id:"huntbar" }, ["🧸 " + f + "/5", el("div", { class:"prog" }, [el("i", { style:"width:" + (left / 400) + "%" })]), Math.ceil(left / 1000) + " с", el("button", { class:"btn soft", style:"padding:4px 10px", text:"Сдаюсь", onclick:function(){ endHunt(); } })]); }
 function foundRoach(i, e){ var r = S.hunt.roaches[i]; if (!r || r.found) return; r.found = true; floatAt(e.clientX, e.clientY - 20, "+12 🪙", "#B58500"); renderStage(); if (S.hunt.roaches.every(function(x){ return x.found; })) endHunt(); }
 function endHunt(silent){
   if (!S.hunt) return; var f = S.hunt.roaches.filter(function(r){ return r.found; }).length; S.hunt = null; clearInterval(S.huntTimer);
@@ -657,13 +657,13 @@ function endHunt(silent){
 function gate(msg, sub){ app.innerHTML = ""; app.appendChild(el("div", { class:"gate" }, [el("div", null, [el("h1", { text:"🏡 Наш дом" }), el("p", { style:"font-weight:700", text:msg }), sub ? el("p", { class:"tip", text:sub }) : null, el("a", { class:"back", href:"index.html", text:"← На сайт" })])])); }
 function intro(){
   sheet("🏡 Добро пожаловать домой", function(box){
-    box.appendChild(el("div", { class:"qcard" }, [el("span", { class:"face", html:mascotSVG(68) }), el("div", null, [el("h3", { text:"Главный таракан" }), el("p", { text:"«" + DD.Q[0].s + "»" })])]));
+    box.appendChild(el("div", { class:"qcard" }, [el("span", { class:"face", html:mascotSVG(68) }), el("div", null, [el("h3", { text:"Главный мишка" }), el("p", { text:"«" + DD.Q[0].s + "»" })])]));
     box.appendChild(el("div", { class:"list", style:"margin-top:12px" }, [
       ["🛒", "Покупайте мебель и ставьте её куда хотите", "кнопка «Обставить» — двигать, вращать, убирать"],
       ["🌱", "Сад, грядки, деревья, пруд", "растения растут только политыми — поливайте по очереди"],
       ["🍳", "Кухня, рецепты, рыбалка", "мини-игры на точность и редкие находки"],
       ["📬", "Календарь тоже помогает", "за заполненное расписание и встречи приходят награды"],
-      ["📜", "30 сюжетных заданий + ежедневные", "и заказы соседей-тараканов каждый день"]
+      ["📜", "30 сюжетных заданий + ежедневные", "и заказы соседей-мишек каждый день"]
     ].map(function(r){ return el("div", { class:"li" }, [el("span", { class:"em", text:r[0] }), el("div", { class:"bd" }, [el("b", { text:r[1] }), el("small", { text:r[2] })])]); })));
     box.appendChild(el("button", { class:"btn full", style:"margin-top:14px", text:"Поехали!", onclick:function(){ act("intro", {}, true); closeSheet(); } }));
   });
