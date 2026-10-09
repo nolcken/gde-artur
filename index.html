@@ -58,6 +58,7 @@ h1 .q{color:var(--accent);display:inline-block;transform:rotate(8deg);transform-
 .btn.ghost{background:transparent;color:var(--ink)}
 .btn.pink{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .btn.small{padding:6px 12px;font-size:13px}
+.home-btn{text-decoration:none}
 .btn.tiny{padding:4px 10px;font-size:12px;border-width:1.5px}
 .banner{border-radius:16px;padding:12px 16px;background:var(--surface-2);font-size:14px;font-weight:600;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between}
 
@@ -460,6 +461,7 @@ function pull(force){
     if (!j.ok && j.error === "bad_code"){ lockOut("Код сменился. Войди заново."); return; }
     if (!j.ok) throw new Error("bad");
     setGift(j.gift);
+    if (!!j.home !== !!ui.homeOk){ ui.homeOk = !!j.home; if (S) render(); }
     if (j.presence){ ui.pres = j.presence; ui.skew = j.presence.now - Date.now(); updPresence(); }
     if (ui.pending > 0) return;
     if (j.changed && j.state){ S = j.state; store("kto-gde-cache", S); setSync("ok"); render(); }
@@ -536,6 +538,7 @@ function header(){
       me ? el("div",{class:"mechip"},["Ты: " + NAME[me.who], el("span",{class:"av " + me.who,text:INIT[me.who]}), el("button",{type:"button",class:"btn ghost tiny",onclick:logout,text:"Выйти"})])
          : el("button",{type:"button",class:"btn",onclick:openLogin,text:"Войти"}),
       me && ui.gift ? el("button",{type:"button",class:"btn pink small gift-btn",onclick:openGift,text:ui.gift.preview ? "🎁 Предпросмотр подарка" : "🎁 Подарок"}) : null,
+      me && ui.homeOk ? el("a",{class:"btn small home-btn",href:"dom.html",text:"🏡 Наш дом"}) : null,
       syncEl()
     ])
   ]);
