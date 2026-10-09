@@ -113,6 +113,10 @@ function drawText(T, p, r){
   return { s:'<text transform="' + tr + '" font-size="' + p.size + '" fill="' + p.c + '" text-anchor="' + (o.anchor || "middle") + '" font-family="' + (o.font || "Unbounded, sans-serif") + '" font-weight="' + (o.weight || 800) + '"' + (o.cls ? ' class="' + o.cls + '"' : "") + '>' + String(p.s).replace(/[<&>]/g, "") + '</text>',
            k:o.k != null ? o.k : q[0] + q[1] + .05, z:p.z };
 }
+function drawRaw(T, p){
+  var q = T(p.u, p.v), c = P(q[0], q[1], p.z);
+  return { s:'<g transform="translate(' + c[0].toFixed(1) + " " + c[1].toFixed(1) + ") scale(" + p.sc.toFixed(3) + ')">' + p.svg + "</g>", k:0, z:p.z };
+}
 function drawGlow(T, p){
   var q = T(p.u, p.v), c = P(q[0], q[1], p.z);
   return { s:'<circle class="glow" cx="' + c[0].toFixed(1) + '" cy="' + c[1].toFixed(1) + '" r="' + (p.r * 44).toFixed(1) + '" fill="url(#glow-' + (p.c || "warm") + ')"/>', k:1e6, z:p.z, glow:true };
@@ -133,6 +137,7 @@ function renderPrims(prims, X, Y, r){
       case "l": d = drawLine(T, p); break;
       case "x": d = drawText(T, p, r); break;
       case "g": d = drawGlow(T, p); break;
+      case "r": d = drawRaw(T, p); break;
     }
     // порядок отрисовки = порядок в описании предмета (сзади-наперёд), k — сдвиг
     d.k = i + (p.o && p.o.k ? p.o.k : 0); d.i = i; out.push(d);
@@ -163,24 +168,40 @@ function roachOld(u, v, z, s, o){
   if (o.bow) out.push(Pl([[u - .07 * s, v - .1 * s, z + .1 * s],[u, v - .1 * s, z + .07 * s],[u + .07 * s, v - .1 * s, z + .1 * s],[u + .07 * s, v - .1 * s, z + .02 * s],[u, v - .1 * s, z + .05 * s],[u - .07 * s, v - .1 * s, z + .02 * s]], o.bow));
   return out;
 }
-/* плюшевый мишка: u,v — где стоит, s — масштаб; смотрит на зрителя */
+/* плюшевый мишка — векторный спрайт (лицом к зрителю). u,v — где стоит, s — масштаб */
+function Rw(u, v, z, svg, sc, o){ return { t:"r", u:u, v:v, z:z, svg:svg, sc:sc, o:o || {} }; }
+function bearSVG(c, o){
+  o = o || {};
+  var L = lt(c, .45), S = dk(c, .38), D2 = dk(c, .12), K = "#2A1622", P = "#FFB3CF", sw = 'stroke="' + S + '" stroke-width="1.1"';
+  var g = '<ellipse cx="0" cy="0" rx="17" ry="5" fill="rgba(36,16,58,.16)"/>';
+  // уши
+  g += '<circle cx="-11.5" cy="-49" r="5.8" fill="' + c + '" ' + sw + '/><circle cx="11.5" cy="-49" r="5.8" fill="' + c + '" ' + sw + '/>';
+  g += '<circle cx="-11.3" cy="-48.6" r="3.1" fill="' + P + '"/><circle cx="11.3" cy="-48.6" r="3.1" fill="' + P + '"/>';
+  // тело
+  g += '<ellipse cx="0" cy="-17" rx="14.5" ry="14.5" fill="' + c + '" ' + sw + '/>';
+  g += '<path d="M6 -29 A14.5 14.5 0 0 1 8 -5 A16 16 0 0 0 6 -29Z" fill="' + D2 + '" opacity=".55"/>';
+  g += '<ellipse cx="0" cy="-15.5" rx="8.6" ry="9.4" fill="' + L + '"/>';
+  g += '<path d="M-4 -11 q4 2.5 8 0" stroke="' + lt(S, .3) + '" stroke-width=".8" fill="none" stroke-dasharray="1.4 1.4"/>';
+  // лапки
+  g += '<ellipse cx="-9.5" cy="-4.5" rx="7.4" ry="5.6" fill="' + c + '" ' + sw + '/><ellipse cx="9.5" cy="-4.5" rx="7.4" ry="5.6" fill="' + c + '" ' + sw + '/>';
+  g += '<ellipse cx="-9.5" cy="-3.9" rx="4.1" ry="3" fill="' + L + '"/><ellipse cx="9.5" cy="-3.9" rx="4.1" ry="3" fill="' + L + '"/>';
+  g += '<g transform="rotate(28 -13 -21)"><ellipse cx="-13" cy="-21" rx="5" ry="8.4" fill="' + c + '" ' + sw + '/></g><g transform="rotate(-28 13 -21)"><ellipse cx="13" cy="-21" rx="5" ry="8.4" fill="' + c + '" ' + sw + '/></g>';
+  // голова
+  g += '<circle cx="0" cy="-38.5" r="14.2" fill="' + c + '" ' + sw + '/>';
+  g += '<ellipse cx="-5.5" cy="-45.5" rx="5" ry="2.8" fill="#fff" opacity=".22" transform="rotate(-20 -5.5 -45.5)"/>';
+  g += '<ellipse cx="0" cy="-33.2" rx="7.2" ry="5.4" fill="' + L + '"/>';
+  g += '<ellipse cx="0" cy="-35.6" rx="2.7" ry="2" fill="' + K + '"/><ellipse cx="-.7" cy="-36.1" rx=".8" ry=".5" fill="#fff" opacity=".7"/>';
+  g += '<path d="M0 -33.6 v1.4 M-2.4 -31.6 q1.2 1.6 2.4 .4 q1.2 1.2 2.4 -.4" stroke="' + K + '" stroke-width=".9" fill="none" stroke-linecap="round"/>';
+  g += '<circle cx="-5.6" cy="-40.6" r="2" fill="' + K + '"/><circle cx="5.6" cy="-40.6" r="2" fill="' + K + '"/>';
+  g += '<circle cx="-5" cy="-41.3" r=".7" fill="#fff"/><circle cx="6.2" cy="-41.3" r=".7" fill="#fff"/>';
+  g += '<ellipse cx="-9.6" cy="-34.6" rx="2.7" ry="1.6" fill="#FF8DB6" opacity=".55"/><ellipse cx="9.6" cy="-34.6" rx="2.7" ry="1.6" fill="#FF8DB6" opacity=".55"/>';
+  if (o.bow) g += '<path d="M0 -25.6 L-7.5 -29.6 L-7.5 -21.6 Z" fill="' + o.bow + '" stroke="' + dk(o.bow, .3) + '" stroke-width=".8" stroke-linejoin="round"/><path d="M0 -25.6 L7.5 -29.6 L7.5 -21.6 Z" fill="' + o.bow + '" stroke="' + dk(o.bow, .3) + '" stroke-width=".8" stroke-linejoin="round"/><circle cx="0" cy="-25.6" r="2.3" fill="' + dk(o.bow, .15) + '"/>';
+  if (o.crown) g += '<path d="M-7.5 -50.5 L-8.8 -59 L-3.8 -55 L0 -61.5 L3.8 -55 L8.8 -59 L7.5 -50.5 Z" fill="#FFD84D" stroke="#C99A12" stroke-width="1" stroke-linejoin="round"/><circle cx="0" cy="-54.2" r="1.5" fill="#FF4F8B"/><circle cx="-5" cy="-53.4" r="1" fill="#6EA8FF"/><circle cx="5" cy="-53.4" r="1" fill="#6EA8FF"/>';
+  return g;
+}
 function bear(u, v, z, s, o){
   o = o || {}; s = s || 1;
-  var c = o.c || "#C68A5A", L = lt(c, .42), K = "#3b2416", out = [];
-  function at(dx){ return [u + dx * s / 2, v - dx * s / 2]; }
-  function S2(dx, zz, r, col, op){ var q = at(dx); return Sp(q[0], q[1], z + zz * s, r * s, col, op); }
-  out.push(S2(-.08, .43, .045, c), S2(.08, .43, .045, c), S2(-.08, .43, .022, "#FFB3CF", { flat:true }), S2(.08, .43, .022, "#FFB3CF", { flat:true }));
-  out.push(S2(-.06, .035, .045, c), S2(.06, .035, .045, c));
-  out.push(S2(0, .145, .115, c), S2(0, .125, .065, L, { flat:true }));
-  out.push(S2(-.115, .17, .042, c), S2(.115, .17, .042, c));
-  out.push(S2(0, .34, .105, c));
-  out.push(S2(0, .305, .048, L, { flat:true }), S2(0, .322, .017, K, { flat:true }));
-  out.push(S2(-.042, .365, .014, K, { flat:true }), S2(.042, .365, .014, K, { flat:true }));
-  out.push(S2(-.068, .318, .016, "#FF9DBD", { flat:true, op:.8 }), S2(.068, .318, .016, "#FF9DBD", { flat:true, op:.8 }));
-  if (o.bow) out.push(S2(-.035, .245, .026, o.bow, { flat:true }), S2(.035, .245, .026, o.bow, { flat:true }), S2(0, .245, .014, dk(o.bow, .25), { flat:true }));
-  if (o.crown){ var cp = [[-.065,.43],[.065,.43],[.075,.54],[.035,.49],[0,.56],[-.035,.49],[-.075,.54]].map(function(p){ var q = at(p[0]); return [q[0], q[1], z + p[1] * s]; }); out.push(Pl(cp, "#FFD84D")); }
-  if (o.k != null) out.forEach(function(p){ p.o.k = (p.o.k || 0) + o.k; });
-  return out;
+  return [Rw(u, v, z, bearSVG(o.c || "#C68A5A", o), s * .34, { k:o.k })];
 }
 function heartPts(u, v, z, s, plane){
   var out = [];
@@ -328,15 +349,7 @@ D.desk = function(c){ return [].concat(legs4(.1, .14, 1.9, .86, .72, dk(c, .2), 
   Cy(.3, .6, .78, .06, .12, "#FF6FA3")
 ]); };
 D.heart_lamp = function(){ return [Cy(.5, .5, 0, .18, .08, "#24103A"), B(.48, .48, .08, .04, .04, .3, METAL), Pl(heartPts(.5, .5, .72, .32), "#FF4F8B", { cls:"heartglow" }), Pl(heartPts(.5, .51, .73, .22), "#FF9DBD", { stroke:false }), Gl(.5, .6, .7, 1.1, "pink")]; };
-D.teddy = function(c){ c = c || "#C68A5A"; return [
-  Sp(.5, .55, .3, .3, c), Sp(.5, .62, .28, .17, lt(c, .35), { k:.2 }),
-  Sp(.28, .66, .14, .12, c, { k:.25 }), Sp(.72, .66, .14, .12, c, { k:.25 }),
-  Sp(.24, .5, .36, .1, c), Sp(.76, .5, .36, .1, c),
-  Sp(.5, .5, .74, .24, c, { k:.3 }), Sp(.32, .5, .92, .09, c, { k:.2 }), Sp(.68, .5, .92, .09, c, { k:.2 }),
-  Sp(.5, .62, .68, .1, lt(c, .4), { k:.5 }), Sp(.5, .7, .7, .035, "#24103A", { flat:true, k:.6 }),
-  Sp(.42, .66, .8, .03, "#24103A", { flat:true, k:.6 }), Sp(.58, .66, .8, .03, "#24103A", { flat:true, k:.6 }),
-  Pl([[.38,.68,.54],[.5,.7,.5],[.62,.68,.54],[.62,.68,.44],[.5,.7,.48],[.38,.68,.44]], "#FF4F8B", { k:.7 })
-]; };
+D.teddy = function(c){ return [Pl(heartPts(.5, .5, .005, .32, "floor"), "#FFD6E5", { stroke:false })].concat(bear(.5, .52, 0, 2.9, { c:c || "#C68A5A", bow:"#FF4F8B" })); };
 D.tent = function(c){
   var a = [1, 1, 2.05], s = [.05, .05, 0], r = [1.95, .05, 0], f = [1.95, 1.95, 0], l = [.05, 1.95, 0], out = [
     El(1, 1, .01, .95, .95, "#FFF3F7", { stroke:false }),
@@ -403,6 +416,20 @@ D.toilet = function(){ return [B(.25, .08, .3, .5, .24, .5, WHITE), Cy(.5, .55, 
 D.bath_sink = function(c){ return [Cy(.5, .45, 0, .1, .72, WHITE), B(.14, .14, .72, .72, .56, .14, c), Fl(.24, .24, .865, .52, .36, "#cfe8ff", { k:310 }), B(.46, .14, .86, .08, .08, .2, METAL), B(.46, .14, 1.02, .08, .18, .04, METAL)]; };
 D.washer = function(c){ return [B(.08, .1, 0, .84, .76, .9, c), Ve(.5, .861, .42, .26, .26, "#cfd3e6"), Ve(.5, .862, .42, .19, .19, "#6EA8FF", { k:.1, cls:"spin" }), B(.15, .861, .76, .3, .01, .08, "#2b2838"), Sp(.75, .86, .8, .03, "#3FC7B4", { flat:true })]; };
 D.duck = function(c){ c = c || "#FFD84D"; return [Sp(.5, .55, .12, .14, c), Sp(.42, .48, .3, .09, c, { k:.2 }), Pl([[.34,.5,.3],[.26,.52,.28],[.34,.52,.26]], "#FF8A3D", { k:.3 }), Sp(.4, .52, .34, .015, "#24103A", { flat:true, k:.31 })]; };
+/* — коробки с переезда — */
+D.box = function(c, seed){
+  var R = rnd(seed), K = "#D9A866", T = "#E9C48A", tape = "#F3E3C4", o = [];
+  function bx(u, v, z, w, d, h){
+    o.push(B(u, v, z, w, d, h, K, { top:T }));
+    o.push(Fl(u + w * .45, v, z + h + .001, w * .1, d, tape, { stroke:false, k:.1 }));
+    o.push(Pl([[u + w * .1, v + d + .001, z + h * .35], [u + w * .5, v + d + .001, z + h * .35], [u + w * .5, v + d + .001, z + h * .7], [u + w * .1, v + d + .001, z + h * .7]], "#FFF8EE", { sw:.4, k:.2 }));
+    o.push(Ln([u + w * .15, v + d + .002, z + h * .55], [u + w * .42, v + d + .002, z + h * .55], "#FF6FA3", 1.1, { k:.3 }));
+  }
+  var big = R() < .5;
+  if (big){ bx(.12, .14, 0, .76, .72, .5); bx(.24, .26, .5, .5, .46, .3); }
+  else { bx(.1, .12, 0, .8, .78, .46); o.push(Pl(heartPts(.5, .9, .3, .06), "#FF4F8B", { stroke:false, k:5 })); }
+  return o;
+};
 /* — мишкин штаб — */
 D.roach_table = function(c){ return [].concat(legs4(.2, .2, 1.8, .8, .45, WOOD_D, .06), [B(.12, .12, .45, 1.76, .76, .06, c), Fl(.6, .3, .515, .8, .4, "#FBF7F2", { k:500 }), Ln([.7, .4, .52], [1.3, .55, .52], "#FF4F8B", 1, { k:501 }), Pl(heartPts(1.3, .5, .52, .06, "floor"), "#FF4F8B", { k:502, stroke:false })],
   bear(.35, .5, .51, .7, { k:510 }), bear(1.65, .5, .51, .7, { k:510 }), bear(1, .75, .51, .7, { k:511, bow:"#9B7BFF" })); };

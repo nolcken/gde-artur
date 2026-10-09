@@ -27,6 +27,8 @@ var WHERE = {
    k: floor | rug | wall · w×d — клетки · p — монеты · h — сердечки · c — уют · l — уровень дома · cols — цвета
    at — где можно ставить · fn — особое действие */
 var ITEMS = [
+  // коробки с переезда (в магазине нет)
+  { id:"box",           n:"Коробка с переезда",    cat:"decor",  k:"floor", w:1, d:1, p:0,   c:0,  l:99, at:"in", fn:"box", hidden:true },
   // гостиная
   { id:"sofa",          n:"Диван",                 cat:"seat",   k:"floor", w:2, d:1, p:140, c:8,  l:1, cols:C.soft,   at:"in" },
   { id:"armchair",      n:"Кресло",                cat:"seat",   k:"floor", w:1, d:1, p:80,  c:5,  l:1, cols:C.soft,   at:"in" },

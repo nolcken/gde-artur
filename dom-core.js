@@ -27,7 +27,26 @@ function newHome(ts, who){
   };
   h.rooms.living.items.push({ u:h.seq++, i:"window", c:0, wall:"y", x:3 });
   h.rooms.living.items.push({ u:h.seq++, i:"rug_round", c:0, x:3, y:3, r:0 });
+  addBoxes(h);
   return h;
+}
+/* коробки с переезда: в каждой — сюрприз */
+var BOXES = [
+  { t:"Плед и кресло",          inv:{ "armchair:1":1 } },
+  { t:"Копилка мишек",          coins:120 },
+  { t:"Монстера в горшке",      inv:{ "plant_big:0":1 }, hearts:1 },
+  { t:"Картина с сердцем",      inv:{ "picture_heart:0":1 }, coins:40 },
+  { t:"Чайный набор мишек",     bag:{ "g:tea":2, "g:honey":1, "g:milk":1, "g:flour":1, "g:egg":1 }, coins:30 }
+];
+function addBoxes(h){
+  if (h.boxes) return; h.boxes = 1;
+  var R = h.rooms.living, prefer = [[6,6],[7,6],[6,7],[1,6],[7,4],[0,7],[5,7],[7,2]], n = 0;
+  for (var i = 0; i < prefer.length && n < BOXES.length; i++){
+    if (canPlace(h, "living", "box", { x:prefer[i][0], y:prefer[i][1], r:0 })) continue;
+    R.items.push({ u:h.seq++, i:"box", c:0, x:prefer[i][0], y:prefer[i][1], r:0, gift:n++ });
+  }
+  for (var y = 7; y >= 0 && n < BOXES.length; y--) for (var x = 7; x >= 0 && n < BOXES.length; x--)
+    if (!canPlace(h, "living", "box", { x:x, y:y, r:0 })) R.items.push({ u:h.seq++, i:"box", c:0, x:x, y:y, r:0, gift:n++ });
 }
 
 /* ---------- геометрия ---------- */
@@ -175,6 +194,21 @@ function apply(h, op){
   ensureDay(h, ts);
   switch (op.t){
     case "intro": h.intro = 1; return { ok:true };
+    case "boxes": if (h.boxes) return E("Уже есть"); addBoxes(h); return { ok:true };
+    case "unbox": {
+      var fb = findItem(h, a.u); if (!fb || fb.p.i !== "box") return E("Это не коробка");
+      var g0 = BOXES[fb.p.gift % BOXES.length];
+      h.rooms[fb.room].items.splice(fb.idx, 1);
+      if (g0.coins) h.coins += g0.coins; if (g0.hearts) h.hearts += g0.hearts;
+      Object.keys(g0.inv || {}).forEach(function(k){ h.inv[k] = (h.inv[k] || 0) + g0.inv[k]; });
+      Object.keys(g0.bag || {}).forEach(function(k){ bagAdd(h, k, g0.bag[k]); });
+      log(h, who, "📦 " + nm + " " + (who === "sasha" ? "распаковала" : "распаковал") + " коробку: " + g0.t.toLowerCase(), ts);
+      return { ok:true, gift:g0 };
+    }
+    case "npcGift": {
+      var Pn = pl(h, who), dn = dk(ts); if (Pn.npc === dn) return E("Сегодня мишка уже дарил подарок");
+      Pn.npc = dn; h.coins += 15; return { ok:true };
+    }
     case "visit": {
       h.daily.visits[who] = 1; var P = pl(h, who); P.last = ts; return { ok:true };
     }
@@ -217,6 +251,7 @@ function apply(h, op){
     }
     case "stash": {
       var f4 = findItem(h, a.u); if (!f4) return E("Предмет не найден");
+      if (f4.p.i === "box") return E("Коробку можно только распаковать — просто нажми на неё");
       h.rooms[f4.room].items.splice(f4.idx, 1);
       var key4 = f4.p.i + ":" + (f4.p.c || 0); h.inv[key4] = (h.inv[key4] || 0) + 1;
       return { ok:true };
@@ -444,7 +479,7 @@ function mailFor(h, cal, nowTs){
 
 window.CORE = {
   NAMES:NAMES, STYLE_PRICE:STYLE_PRICE, dk:dk, hourOf:hourOf, monday:monday, addDays:addDays, clone:clone, rng:rng,
-  newHome:newHome, apply:apply, canPlace:canPlace, foot:foot, rectOf:rectOf, roomAllowed:roomAllowed, countOf:countOf, placedOf:placedOf, findItem:findItem,
+  newHome:newHome, apply:apply, BOXES:BOXES, canPlace:canPlace, foot:foot, rectOf:rectOf, roomAllowed:roomAllowed, countOf:countOf, placedOf:placedOf, findItem:findItem,
   comfort:comfort, level:level, cropInfo:cropInfo, waterMs:waterMs, ensureDay:ensureDay, goodInfo:goodInfo, have:have, ingKey:ingKey, hasFn:hasFn,
   questProgress:questProgress, dailyProgress:dailyProgress, mailFor:mailFor, bag:bag
 };

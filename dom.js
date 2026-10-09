@@ -117,7 +117,14 @@ function sceneSVG(){
     if (gk !== "wall"){ var f = CO.foot(ghIt, gh.r); body += tilePoly(gh.x, gh.y, f[0], f[1], gh.ok ? "#2FAE60" : "#FF2E74", .45); } }
   if (S.mode === "edit" && S.sel){ var fs = CO.findItem(h, S.sel); if (fs && ITEM[fs.p.i].k !== "wall"){ var rc = CO.rectOf(fs.p); body += tilePoly(rc.x0, rc.y0, rc.x1 - rc.x0, rc.y1 - rc.y0, "#FF2E74", .25); } }
   if (S.hunt) S.hunt.roaches.forEach(function(r, i){ if (!r.found) floors.push({ roach:i, rect:{ x0:r.x, y0:r.y, x1:r.x + .3, y1:r.y + .3 }, r:r }); });
+  var N = S.npc && S.npc.room === S.room && !S.hunt ? S.npc : null;
+  if (N && !npcFree(N.x, N.y)){ S.npc = null; npcInit(); N = S.npc && S.npc.room === S.room ? S.npc : null; }
+  if (N) floors.push({ npc:N, rect:{ x0:N.x + .2, y0:N.y + .2, x1:N.x + .8, y1:N.y + .8 } });
   function drawOne(o){
+    if (o.npc){ var n = o.npc, a0 = A.P(n.px + .5, n.py + .5, 0), a1 = A.P(n.x + .5, n.y + .5, 0), moved = n.px !== n.x || n.py !== n.y;
+      var bp = A.renderPrims(A.bear(n.x + .5, n.y + .5, 0, 2.3, { crown:n.main, c:n.c, bow:n.main ? "#FF2E74" : n.bow }), 0, 0, 0);
+      var sh = '<ellipse cx="' + a1[0].toFixed(1) + '" cy="' + (a1[1] + 1).toFixed(1) + '" rx="13" ry="5" fill="rgba(36,16,58,.18)"/>';
+      return '<g class="npc' + (moved ? " moving" : "") + '" data-npc="1" style="--dx:' + (a0[0] - a1[0]).toFixed(1) + 'px;--dy:' + (a0[1] - a1[1]).toFixed(1) + 'px">' + sh + '<g class="npcb">' + bp.body + '</g></g>'; }
     if (o.roach != null){ var rp = A.renderPrims(A.bear(o.r.x + .15, o.r.y + .15, o.r.z || 0, 1, { c:["#C68A5A", "#FFB3CF", "#C9B6FF", "#9BE3D6", "#FFE08A"][o.roach % 5], bow:o.roach % 2 ? "#FF4F8B" : null }), 0, 0, 0); return '<g class="roach-hit" data-roach="' + o.roach + '">' + rp.body + '</g>'; }
     var p = o.p, pl = placement(p), res = A.renderPrims(itemPrims(p, o.ghost ? ctx0 : null), pl[0], pl[1], pl[2]);
     if (!o.ghost) glow += res.glow;
@@ -133,7 +140,12 @@ function sceneSVG(){
   rugs.forEach(function(o){ body += drawOne(o); });
   depthSort(floors).forEach(function(o){ body += drawOne(o); });
   var defs = '<defs>' + [["warm","#FFD27A"],["pink","#FF6FA3"],["fire","#FF8A3D"],["candle","#FFC23D"]].map(function(g){ return '<radialGradient id="glow-' + g[0] + '"><stop offset="0" stop-color="' + g[1] + '" stop-opacity=".55"/><stop offset=".55" stop-color="' + g[1] + '" stop-opacity=".18"/><stop offset="1" stop-color="' + g[1] + '" stop-opacity="0"/></radialGradient>'; }).join("") + '</defs>';
-  return defs + '<g id="scene">' + body + '</g><g class="glowlayer">' + glow + '</g>';
+  var bub = "";
+  if (N && N.say && Date.now() < N.until && N.px === N.x && N.py === N.y){
+    var bpt = A.P(N.x + .5, N.y + .5, 1.55), w = Math.min(230, N.say.length * 6.4 + 22);
+    bub = '<g class="bubble"><rect x="' + (bpt[0] - w / 2).toFixed(1) + '" y="' + (bpt[1] - 26).toFixed(1) + '" width="' + w.toFixed(1) + '" height="24" rx="12" fill="#fff" stroke="#F1D9E6"/><path d="M' + (bpt[0] - 5).toFixed(1) + " " + (bpt[1] - 3).toFixed(1) + " l5 7 l5 -7z" + '" fill="#fff"/><text x="' + bpt[0].toFixed(1) + '" y="' + (bpt[1] - 10).toFixed(1) + '" text-anchor="middle" font-size="11.5" font-weight="800" font-family="Manrope, sans-serif" fill="#24103A">' + N.say.replace(/[<&>]/g, "") + '</text></g>';
+  }
+  return defs + '<g id="scene">' + body + '</g><g class="glowlayer">' + glow + '</g>' + bub;
 }
 function viewBox(){
   var room = DD.ROOM[S.room], W = room.w, Dp = room.d;
@@ -168,14 +180,14 @@ function ghostFrom(sx, sy){
 }
 function bindStage(svg){
   var st = null, raf = 0;
-  svg.addEventListener("pointerdown", function(e){ st = { x:e.clientX, y:e.clientY, pan:S.pan.slice(), moved:false, id:e.pointerId, target:e.target }; svg.setPointerCapture(e.pointerId); });
+  svg.addEventListener("pointerdown", function(e){ S.down = true; st = { x:e.clientX, y:e.clientY, pan:S.pan.slice(), moved:false, id:e.pointerId, target:e.target }; svg.setPointerCapture(e.pointerId); });
   svg.addEventListener("pointermove", function(e){
     if (st){ var dx = e.clientX - st.x, dy = e.clientY - st.y; if (!st.moved && Math.hypot(dx, dy) > 7) st.moved = true;
       if (st.moved && S.zoom > 1.01){ var s = svgPoint(svg, 0, 0)[2]; S.pan = [st.pan[0] - dx * s, st.pan[1] - dy * s]; clampPan(); svg.setAttribute("viewBox", viewBox().join(" ")); } }
     if (S.place && e.pointerType === "mouse" && !raf){ raf = requestAnimationFrame(function(){ raf = 0; if (!S.place) return; var p = svgPoint(svg, e.clientX, e.clientY); var g = ghostFrom(p[0], p[1]); if (!S.ghost || g.x !== S.ghost.x || g.y !== S.ghost.y || g.wall !== S.ghost.wall || g.r !== S.ghost.r){ S.ghost = g; renderStage(); } }); }
   });
-  svg.addEventListener("pointerup", function(e){ var s0 = st; st = null; if (!s0 || s0.moved) return; tap(e, svg, s0.target); });
-  svg.addEventListener("pointercancel", function(){ st = null; });
+  svg.addEventListener("pointerup", function(e){ S.down = false; var s0 = st; st = null; if (!s0 || s0.moved) return; tap(e, svg, s0.target); });
+  svg.addEventListener("pointercancel", function(){ S.down = false; st = null; });
   svg.addEventListener("wheel", function(e){ if (!e.ctrlKey && Math.abs(e.deltaY) < 30) return; e.preventDefault(); zoomBy(e.deltaY < 0 ? 1.15 : 1 / 1.15); }, { passive:false });
 }
 function clampPan(){ var room = DD.ROOM[S.room], lim = (room.w + room.d) * 16 * (1 - 1 / S.zoom) + 10; S.pan[0] = Math.max(-lim * 2, Math.min(lim * 2, S.pan[0])); S.pan[1] = Math.max(-lim, Math.min(lim, S.pan[1])); }
@@ -191,6 +203,8 @@ function tap(e, svg, t0){
     else { S.ghost = g; renderStage(); }
     return;
   }
+  var gN = t.closest && t.closest("[data-npc]");
+  if (gN && S.mode !== "edit"){ npcClick(e); return; }
   var u = gU ? +gU.getAttribute("data-u") : null;
   if (S.mode === "edit"){ S.sel = u; renderStage(); return; }
   if (u) interact(u, e);
@@ -207,15 +221,104 @@ function interact(u, e){
     case "pond": return openFish();
     case "well": { var w = act("water", { room:S.room, all:true }); if (w) toast("💦 Полито грядок: " + w.n); return; }
     case "mail": return openMail();
+    case "box": { var rb = act("unbox", { u:u }); if (rb){ var g = rb.gift, parts = [];
+      Object.keys(g.inv || {}).forEach(function(k){ parts.push(ITEM[k.split(":")[0]].n.toLowerCase()); });
+      if (g.bag) parts.push("продукты для чая"); if (g.coins) parts.push(g.coins + " 🪙"); if (g.hearts) parts.push(g.hearts + " 💗");
+      floatAt(e.clientX - 10, e.clientY - 30, "🎁", "#FF2E74"); npcSay("Ого! " + g.t + "!");
+      toast("📦 В коробке: " + parts.join(", ") + (g.inv ? " · вещи — на складе" : "")); } return; }
   }
   floatAt(e.clientX - 10, e.clientY - 24, "💗", "#FF2E74");
   toast(it.n + (it.c ? " · уют +" + it.c : ""));
 }
 
+/* ---------- мишка-жилец: гуляет по комнате ---------- */
+var NPC_SAY = ["Как тут уютно!", "Обнимашки?", "Где мой мёд?", "Ура, мы дома!", "Хочу блинчиков!", "Люблю этот дом", "Саша скоро придёт?", "Тут бы ещё кресло…", "Тш-ш, я считаю звёзды", "Потрогай меня!", "Я самый плюшевый", "Пахнет пирогами?"];
+var NPC_COLS = ["#FFB3CF", "#C9B6FF", "#9BE3D6", "#FFE08A", "#A9CBFF"];
+function npcFree(x, y){
+  var room = DD.ROOM[S.room], R = H().rooms[S.room]; if (x < 0 || y < 0 || x >= room.w || y >= room.d) return false;
+  return !R.items.some(function(p){ var it = ITEM[p.i]; if (it.k !== "floor") return false; var r = CO.rectOf(p); return x >= r.x0 && x < r.x1 && y >= r.y0 && y < r.y1; });
+}
+function npcInit(){
+  if (S.npc && S.npc.room === S.room) return;
+  var room = DD.ROOM[S.room], cx = room.w / 2, cy = room.d / 2, best = null;
+  for (var y = 0; y < room.d; y++) for (var x = 0; x < room.w; x++) if (npcFree(x, y)){ var d = Math.abs(x + .5 - cx) + Math.abs(y + .5 - cy) + Math.random(); if (!best || d < best.d) best = { x:x, y:y, d:d }; }
+  if (!best){ S.npc = null; return; }
+  var main = S.room === "living";
+  S.npc = { room:S.room, x:best.x, y:best.y, px:best.x, py:best.y, main:main, c:main ? "#C68A5A" : NPC_COLS[ART.hash(S.room) % NPC_COLS.length], bow:"#9B7BFF", say:null, until:0 };
+}
+function npcPhrase(){
+  var h = H(), ph = dayPhase(), qp = CO.questProgress(h, S.cal, now()), list = NPC_SAY.slice();
+  if (ph === "night") list.push("Пора спать…", "Включите лампу, темно", "Спокойной ночи!");
+  if (qp && !qp.done) list.push("Задание: " + qp.q.g.toLowerCase());
+  if (qp && qp.done) list.push("Задание готово! Жми «Задания»");
+  if (h.rooms.living.items.some(function(p){ return p.i === "box"; })) list.push("Распакуем коробки?", "Что в коробках?..");
+  return list[Math.floor(Math.random() * list.length)];
+}
+function npcSay(txt){ if (!S.npc) return; S.npc.px = S.npc.x; S.npc.py = S.npc.y; S.npc.say = txt; S.npc.until = Date.now() + 3600; renderStage(); }
+function npcClick(e){
+  floatAt(e.clientX - 8, e.clientY - 30, "💗", "#FF2E74");
+  var r = act("npcGift", {}, true);
+  if (r){ floatAt(e.clientX + 10, e.clientY - 10, "+15 🪙", "#B58500"); npcSay("Нашёл монетку — держи!"); }
+  else npcSay(npcPhrase());
+}
+function npcTick(){
+  if (document.hidden || S.mode !== "view" || S.place || S.hunt || S.down || document.querySelector(".game")) return;
+  npcInit(); var n = S.npc; if (!n) return;
+  n.px = n.x; n.py = n.y;
+  if (Date.now() < n.until) return;
+  if (n.say){ n.say = null; renderStage(); return; }
+  if (Math.random() < .12){ npcSay(npcPhrase()); return; }
+  if (Math.random() < .7){
+    var dirs = [[1,0],[-1,0],[0,1],[0,-1]].sort(function(){ return Math.random() - .5; });
+    for (var i = 0; i < 4; i++){ var nx = n.x + dirs[i][0], ny = n.y + dirs[i][1]; if (npcFree(nx, ny)){ n.x = nx; n.y = ny; break; } }
+  }
+  renderStage();
+}
+
+/* ---------- боковая панель ---------- */
+function panel(title, kids, extra){ return el("section", { class:"panel" }, [el("h4", null, [title, extra || null])].concat(kids)); }
+function aside(qp){
+  var h = H(), out = [];
+  if (qp){
+    out.push(el("section", { class:"panel quest" }, [
+      el("div", { class:"qrow" }, [el("span", { class:"face", html:mascotSVG(48) }), el("div", null, [el("small", { text:"Задание " + qp.q.id + " из " + DD.Q.length }), el("b", { text:qp.q.t })])]),
+      el("p", { class:"goal", text:"🎯 " + qp.q.g + " · " + qp.cur + "/" + qp.need }),
+      el("div", { class:"prog" }, [el("i", { style:"width:" + Math.round(qp.cur / qp.need * 100) + "%" })]),
+      el("div", { class:"prow" }, [el("span", { text:"Награда: " + money(qp.q.r.coins, qp.q.r.hearts) }), qp.done ? el("button", { class:"btn yellow", text:"Забрать", onclick:function(){ if (act("claimQ", { q:qp.q.id })) toast("Задание выполнено! 🎉"); } }) : el("button", { class:"btn soft", text:"Подробнее", onclick:openQuests })])
+    ]));
+  }
+  var boxes = h.rooms.living.items.filter(function(p){ return p.i === "box"; }).length;
+  if (boxes) out.push(panel("📦 Коробки с переезда", [el("p", { class:"ptxt", text:"В гостиной стоит " + boxes + " " + plural(boxes, "коробка", "коробки", "коробок") + ". Нажми на коробку — внутри сюрприз от мишек." }),
+    S.room !== "living" ? el("button", { class:"btn soft", text:"В гостиную", onclick:function(){ switchRoom("living"); } }) : null]));
+  var d = h.daily;
+  if (d) out.push(panel("☀️ Сегодня", d.tasks.map(function(id){
+    var t = DD.DAILY.filter(function(x){ return x.id === id; })[0], p = CO.dailyProgress(h, id, S.cal, me.who, now()), got = d.claimed[id], ok = p[0] >= p[1];
+    return el("div", { class:"mrow" + (got ? " done" : "") }, [el("span", { class:"mt", text:(got ? "✅ " : "") + t.t }), got ? el("span", { class:"mm", text:"готово" }) : ok ? el("button", { class:"btn small", text:"Забрать", onclick:function(){ act("claimD", { id:id }); } }) : el("span", { class:"mm", text:p[0] + "/" + p[1] })]);
+  }), el("span", { class:"mm", text:"🔥 " + (h.streak.n || 0) })));
+  var plots = [];
+  Object.keys(h.rooms).forEach(function(r){ if (!h.rooms[r].open) return; h.rooms[r].items.forEach(function(p){ if (p.crop) plots.push({ p:p, room:r, info:CO.cropInfo(p.crop, now(), r) }); }); });
+  if (h.rooms.garden && h.rooms.garden.open){
+    plots.sort(function(a, b){ return (b.info.ripe - a.info.ripe) || (a.info.wet - b.info.wet) || (a.info.left - b.info.left); });
+    var beds = 0; Object.keys(h.rooms).forEach(function(r){ h.rooms[r].items.forEach(function(p){ if (p.i === "garden_bed" && !p.crop) beds++; }); });
+    var rows = plots.slice(0, 5).map(function(x){ var c = DD.CROP[x.p.crop.id];
+      return el("div", { class:"mrow" }, [el("span", { class:"mt", text:c.e + " " + c.n + (x.room === "greenhouse" ? " · теплица" : "") }), el("span", { class:"mm" + (x.info.ripe ? " hot" : !x.info.wet ? " warn" : ""), text:x.info.ripe ? "✨ созрело" : !x.info.wet ? "💧 сохнет" : fmtDur(x.info.left) })]); });
+    if (!plots.length) rows.push(el("p", { class:"ptxt", text:beds ? "Грядки пустуют: " + beds + ". Посадите что-нибудь!" : "Поставьте грядки в саду." }));
+    else if (plots.length > 5) rows.push(el("p", { class:"ptxt", text:"и ещё " + (plots.length - 5) }));
+    out.push(panel("🌱 Огород", rows.concat([el("button", { class:"btn soft", text:S.room === "garden" ? "Я в саду" : "В сад", disabled:S.room === "garden", onclick:function(){ switchRoom("garden"); } })])));
+  }
+  if (h.orders) out.push(panel("🧸 Заказы соседей", h.orders.list.map(function(o, i){
+    var ok = !o.done && Object.keys(o.need).every(function(k){ return CO.have(h, k) >= o.need[k]; });
+    var need = Object.keys(o.need).map(function(k){ var g = CO.goodInfo(k.split(":").length === 2 && k.indexOf("d:") === 0 ? k + ":1" : k) || { e:"?" }; return g.e + "×" + o.need[k]; }).join(" ");
+    return el("div", { class:"mrow" + (o.done ? " done" : "") }, [el("span", { class:"mt", text:(o.done ? "✅ " : "") + o.who + " · " + need }), o.done ? null : el("button", { class:"btn small", text:"🪙 " + o.coins, disabled:!ok, title:ok ? "Отдать" : "Пока не хватает", onclick:function(){ if (act("order", { i:i })) toast(o.who + ": «Спасибо!» 🧸💗"); } })]);
+  })));
+  if (h.log.length) out.push(panel("📰 Недавно", h.log.slice(0, 4).map(function(l){ return el("div", { class:"mrow" }, [el("span", { class:"mt", text:l.s }), el("span", { class:"mm", text:hm(l.t) })]); })));
+  return el("aside", { class:"aside" }, out);
+}
+
 /* ---------- каркас страницы ---------- */
 function mascotSVG(size, crown){
   var r = A.renderPrims(A.bear(.5, .5, 0, 1.7, { crown:crown !== false, bow:"#FF2E74" }), 0, 0, 0);
-  return '<svg width="' + size + '" height="' + size + '" viewBox="-21 -9 40 38">' + r.body + "</svg>";
+  return '<svg width="' + size + '" height="' + size + '" viewBox="-15 -21 30 42">' + r.body + "</svg>";
 }
 function render(){
   var h = H(); if (!h) return;
@@ -240,10 +343,10 @@ function render(){
     el("div", { class:"zoom" }, [el("button", { text:"+", title:"Приблизить", onclick:function(){ zoomBy(1.3); } }), el("button", { text:"−", title:"Отдалить", onclick:function(){ zoomBy(1 / 1.3); } })]),
     S.mode === "edit" || S.place ? editBar() : null,
     S.hunt ? huntBar() : null,
-    !S.hunt && qp && S.mode !== "edit" && !S.place ? el("button", { class:"mascot", onclick:openQuests }, [el("span", { class:"face", html:mascotSVG(54) }), el("span", { class:"say" }, [el("b", null, ["Задание " + qp.q.id + " из " + DD.Q.length, qp.done ? el("span", { class:"dot" }) : null]), qp.q.g + " · " + qp.cur + "/" + qp.need])]) : null
   ]);
   var foot = el("p", { class:"tip center", style:"margin-top:10px" }, [el("span", { id:"sync", text:syncTxt() }), " · общий дом, у Саши появится, когда откроешь"]);
-  app.innerHTML = ""; [top, tabs, stage, foot].forEach(function(x){ app.appendChild(x); });
+  var main = el("div", { class:"main" }, [el("div", { class:"left" }, [stage, foot]), aside(qp)]);
+  app.innerHTML = ""; [top, tabs, main].forEach(function(x){ app.appendChild(x); });
   renderStage(); bindStage(svg);
   renderDock();
 }
@@ -333,6 +436,7 @@ function openShop(tab){
         box.appendChild(el("div", { class:"sec", text:"Хозяйство и двор" }));
       }
       var items = DD.ITEMS.filter(function(it){
+        if (it.hidden) return false;
         if (isG) return it.cat === "farm" || it.cat === "yard";
         if (it.cat === "farm" || it.cat === "yard") return false;
         return shopState.cat === "here" ? CO.roomAllowed(it, S.room) : it.cat === shopState.cat;
@@ -372,22 +476,24 @@ function openShop(tab){
     if (shopState.tab === "up"){
       box.appendChild(el("div", { class:"list" }, DD.UPGRADES.map(function(U){
         var cur = h.up[U.id] || 0, nx = U.lv[cur + 1];
-        return el("div", { class:"li" }, [el("span", { class:"em", text:U.e }), el("div", { class:"bd" }, [el("b", { text:U.n + " · ур. " + (cur + 1) + "/" + U.lv.length }), el("small", { text:"Сейчас: " + U.d[cur] + (nx ? " → " + U.d[cur + 1] : "") })]),
-          nx ? el("button", { class:"btn", text:"🪙 " + nx.p, disabled:L < nx.l, title:L < nx.l ? "Нужен " + nx.l + "-й уровень" : "", onclick:function(){ act("upgrade", { id:U.id }); } }) : el("span", { class:"chip", text:"макс." })]);
+        return el("div", { class:"li" }, [el("span", { class:"em", text:U.e }), el("div", { class:"bd" }, [el("b", { text:U.n + " · ур. " + (cur + 1) + "/" + U.lv.length }), el("small", { text:"Сейчас: " + U.d[cur] + (nx ? " → " + U.d[cur + 1] : "") + (nx && L < nx.l ? " · 🔒 нужен " + nx.l + "-й уровень дома" : nx && h.coins < nx.p ? " · не хватает 🪙 " + (nx.p - h.coins) : "") })]),
+          nx ? el("button", { class:"btn", text:"🪙 " + nx.p, disabled:L < nx.l || h.coins < nx.p, title:L < nx.l ? "Нужен " + nx.l + "-й уровень" : "", onclick:function(){ act("upgrade", { id:U.id }); } }) : el("span", { class:"chip", text:"макс." })]);
       })));
     }
   });
 }
 function itemCard(it, h, L){
   var lock = L < it.l, ci = shopState.col[it.id] || 0, own = CO.countOf(h, it.id), maxed = it.max && own >= it.max;
+  var why = lock ? "🔒 Нужен " + it.l + "-й уровень дома, у вас " + L + "-й" : maxed ? "Такая вещь бывает только одна" : (it.p || 0) > h.coins ? "Не хватает 🪙 " + (it.p - h.coins) : (it.h || 0) > h.hearts ? "Не хватает 💗 " + (it.h - h.hearts) + ". Сердечки — за задания, заказы и встречи" : "";
   var where = typeof it.at === "string" ? { in:"в доме", out:"на улице", plot:"сад, теплица" }[it.at] : it.at.map(function(r){ return DD.ROOM[r].n.toLowerCase(); }).join(", ");
-  return el("div", { class:"card" + (lock ? " locked" : "") }, [
+  return el("div", { class:"card" + (lock ? " locked" : ""), title:lock ? why + ". Уровень растёт от уюта — ставьте вещи и украшайте комнаты" : why || null }, [
     thumb(it.id, ci),
     el("div", { class:"nm", text:it.n }),
     el("div", { class:"meta", text:money(it.p, it.h) + " · уют +" + it.c + (own ? " · есть " + own : "") }),
-    el("div", { class:"meta", text:(lock ? "🔒 с " + it.l + "-го уровня · " : "") + where + " · " + it.w + "×" + it.d }),
+    el("div", { class:"meta", text:where + " · " + it.w + "×" + it.d }),
+    why ? el("div", { class:"why", text:why }) : null,
     it.cols && it.cols.length > 1 ? el("div", { class:"cols" }, it.cols.map(function(c, i){ return el("button", { class:i === ci ? "on" : "", style:"background:" + c, title:"Цвет", onclick:function(){ shopState.col[it.id] = i; S.sheet.refresh(); } }); })) : null,
-    el("button", { class:"btn", text:maxed ? "Уже есть" : "Купить", disabled:lock || maxed, onclick:function(){
+    el("button", { class:"btn", text:maxed ? "Уже есть" : lock ? "🔒 С " + it.l + "-го уровня" : why ? "Не хватает" : "Купить", disabled:!!why, onclick:function(){
       if (!act("buy", { id:it.id, c:ci })) return;
       if (CO.roomAllowed(it, S.room)){ closeSheet(); S.mode = "edit"; S.sel = null; S.place = { id:it.id, c:ci, r:0 }; S.ghost = null; render(); toast("Нажми на место в комнате"); }
       else toast("Куплено! Лежит на складе — поставить можно: " + where);
@@ -683,6 +789,8 @@ function boot(){
     if (!S.committed.v) flush();
     var vk = "dom-visit-" + me.who + "-" + CO.dk(now()); if (!read(vk)){ store(vk, 1); act("visit", {}, true); }
     if (!S.local.intro) intro();
+    if (!S.local.boxes) act("boxes", {}, true);
+    setInterval(npcTick, 1300);
     setInterval(function(){ if (!document.hidden && Date.now() - S.lastPull > 14000) pull(); }, 5000);
     setInterval(function(){ if (!S.place) renderStage(); }, 30000);
     document.addEventListener("visibilitychange", function(){ if (!document.hidden){ pull(); var vk2 = "dom-visit-" + me.who + "-" + CO.dk(now()); if (!read(vk2)){ store(vk2, 1); act("visit", {}, true); } } });
