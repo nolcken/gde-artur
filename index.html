@@ -75,6 +75,10 @@ h1 .q{color:var(--accent);display:inline-block;transform:rotate(8deg);transform-
 .pcard .state{font-family:var(--f-display);font-weight:800;font-size:clamp(24px,3vw,34px);line-height:1.02;letter-spacing:-.02em}
 .badge{display:inline-flex;align-items:center;justify-self:start;padding:4px 12px;border-radius:999px;font-weight:800;font-size:12.5px;background:var(--on-cat);color:#fff}
 .pcard p{margin:0;font-weight:600;font-size:15px}
+.pcard .seen{justify-self:start;display:inline-flex;align-items:center;gap:7px;padding:4px 10px 4px 8px;border-radius:999px;background:rgba(255,255,255,.42);font-family:var(--f-mono);font-size:12px;font-weight:700;line-height:1.2}
+.pcard .seen i{width:8px;height:8px;border-radius:50%;background:rgba(34,16,47,.35);flex:0 0 auto}
+.pcard .seen.on i{background:#16C25B;box-shadow:0 0 0 0 rgba(22,194,91,.6);animation:pip 1.8s ease-out infinite}
+@keyframes pip{0%{box-shadow:0 0 0 0 rgba(22,194,91,.6)}100%{box-shadow:0 0 0 8px rgba(22,194,91,0)}}
 .pcard .when{font-family:var(--f-mono);font-size:13px;font-weight:700}
 .dot{width:9px;height:9px;border-radius:50%;background:var(--on-cat);animation:pulse 1.8s infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,16,47,.45)}70%{box-shadow:0 0 0 10px rgba(34,16,47,0)}100%{box-shadow:0 0 0 0 rgba(34,16,47,0)}}
@@ -456,6 +460,7 @@ function pull(force){
     if (!j.ok && j.error === "bad_code"){ lockOut("Код сменился. Войди заново."); return; }
     if (!j.ok) throw new Error("bad");
     setGift(j.gift);
+    if (j.presence){ ui.pres = j.presence; ui.skew = j.presence.now - Date.now(); updPresence(); }
     if (ui.pending > 0) return;
     if (j.changed && j.state){ S = j.state; store("kto-gde-cache", S); setSync("ok"); render(); }
     else setSync("ok");
@@ -544,11 +549,42 @@ function pcard(who){
   var badge = r.busy === false ? G[who].free : r.busy === true ? G[who].busy : "Без плана";
   return el("section",{class:"pcard" + (r.busy === true ? " busy" : ""),style:"--cc:" + catColor(r.cat)},[
     el("div",{class:"who"},[el("span",{text:NAME[who] + " сейчас"}), el("span",{class:"dot"})]),
+    presEl(who),
     el("div",{class:"state",text:title}),
     el("span",{class:"badge",text:badge}),
     line ? el("p",{text:line}) : null,
     whenL ? el("div",{class:"when",text:whenL}) : null
   ]);
+}
+/* ---------- кто на сайте ---------- */
+function presEl(who){
+  var p = ui.pres && ui.pres[who];
+  if (!me || !p) return null;
+  var nowS = Date.now() + (ui.skew || 0), on, txt, was = who === "sasha" ? "была" : "был";
+  if (who === me.who){ on = true; txt = "ты на сайте"; }
+  else if (p.seen && nowS - p.seen < 70000 && !(p.off >= p.seen)){ on = true; txt = "на сайте"; }
+  else {
+    var t = Math.max(p.seen || 0, p.off || 0), age = nowS - t;
+    on = false;
+    if (!t) txt = "ещё не заходил" + (who === "sasha" ? "а" : "");
+    else if (age < 60000) txt = was + " только что";
+    else if (age < 3600000) txt = was + " " + Math.round(age / 60000) + " мин назад";
+    else {
+      var f = function(x, o){ return new Date(x).toLocaleString("ru-RU", Object.assign({ timeZone:"Europe/Minsk" }, o)); };
+      var hm = f(t, { hour:"2-digit", minute:"2-digit" }), dT = f(t, { year:"numeric", month:"2-digit", day:"2-digit" });
+      txt = was + (dT === f(nowS, { year:"numeric", month:"2-digit", day:"2-digit" }) ? " сегодня в " + hm
+          : dT === f(nowS - 864e5, { year:"numeric", month:"2-digit", day:"2-digit" }) ? " вчера в " + hm
+          : " " + f(t, { day:"numeric", month:"long" }) + " в " + hm);
+    }
+  }
+  return el("span",{class:"seen" + (on ? " on" : ""),"data-pres":who,title:on ? "Сейчас на сайте" : "Последний раз на сайте"},[el("i"), txt]);
+}
+function updPresence(){
+  document.querySelectorAll("[data-pres]").forEach(function(x){ var n = presEl(x.getAttribute("data-pres")); if (n) x.replaceWith(n); });
+}
+function bye(){
+  if (DEMO || !me || !navigator.sendBeacon) return;
+  try { navigator.sendBeacon(API, JSON.stringify({ action:"bye", who:me.who, code:me.code })); } catch (e) {}
 }
 function hero(){
   var m = mutual(), kids;
@@ -1118,7 +1154,9 @@ else if (S) render();
 if (!DEMO){
   if (me) pull(true).then(function(){ if (me && !S) loadFailed(); });
   setInterval(function(){ if (!document.hidden && !document.getElementById("modal-root").firstChild) pull(false); }, 20000);
-  document.addEventListener("visibilitychange", function(){ if (!document.hidden) pull(false); });
+  document.addEventListener("visibilitychange", function(){ if (!document.hidden) pull(false); else bye(); });
+  window.addEventListener("pagehide", bye);
+  setInterval(updPresence, 30000);
 }
 setInterval(function(){ if (!document.getElementById("modal-root").firstChild) render(); }, 60000);
 })();
