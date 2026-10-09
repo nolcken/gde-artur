@@ -59,6 +59,24 @@ h1 .q{color:var(--accent);display:inline-block;transform:rotate(8deg);transform-
 .btn.pink{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .btn.small{padding:6px 12px;font-size:13px}
 .home-btn{text-decoration:none}
+.homeb{position:relative;overflow:hidden;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:22px;align-items:center;margin-top:18px;padding:24px 26px;border-radius:30px;background:linear-gradient(120deg,#FF2E74 0%,#C04FD8 55%,#8B6BFF 100%);color:#fff;box-shadow:0 24px 50px -26px rgba(255,46,116,.7);animation:hbIn .7s var(--ease,ease) both}
+@keyframes hbIn{from{opacity:0;transform:translateY(14px)}}
+.homeb .hb-eye{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;opacity:.9}
+.homeb h2{margin:6px 0 8px;font-family:"Unbounded",sans-serif;font-weight:800;font-size:clamp(28px,4vw,44px);letter-spacing:-.02em;line-height:1}
+.homeb p{margin:0;font-weight:600;font-size:15.5px;line-height:1.4;max-width:46ch;opacity:.95}
+.hb-chips{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 16px}
+.hb-chips span{padding:6px 11px;border-radius:999px;background:rgba(255,255,255,.18);font-weight:800;font-size:13px}
+.hb-go{display:inline-flex;align-items:center;padding:12px 20px;border-radius:999px;background:#fff;color:#FF2E74;font-weight:800;font-size:15px;text-decoration:none;box-shadow:0 10px 24px -12px rgba(0,0,0,.45);transition:transform .15s}
+.hb-go:hover{transform:translateY(-2px)}
+.hb-art{display:block;height:230px;border-radius:22px;background:radial-gradient(circle at 50% 40%,rgba(255,255,255,.55),rgba(255,255,255,.18) 70%);transition:transform .25s}
+.hb-art:hover{transform:scale(1.03) rotate(-.6deg)}
+.hb-art svg,.hb-modal-art svg{width:100%;height:100%;display:block}
+.hb-h{position:absolute;width:22px;height:20px;opacity:.35;pointer-events:none;background:no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 30'%3E%3Cpath d='M16 28.5C7 22 1.5 16.6 1.5 9.8 1.5 5.2 5 1.5 9.4 1.5c2.8 0 5.1 1.4 6.6 3.7 1.5-2.3 3.8-3.7 6.6-3.7 4.4 0 7.9 3.7 7.9 8.3 0 6.8-5.5 12.2-14.5 18.7z' fill='%23fff'/%3E%3C/svg%3E");animation:hbFloat 5s ease-in-out infinite alternate}
+.hb-h.h1{left:46%;top:14px}.hb-h.h2{left:52%;bottom:16px;width:14px;height:13px;animation-delay:1.2s}.hb-h.h3{right:18px;top:12px;width:16px;height:15px;animation-delay:2.1s}
+@keyframes hbFloat{to{transform:translateY(-10px) rotate(12deg)}}
+.hb-modal-art{display:block;height:220px;margin:6px 0 4px;border-radius:20px;background:linear-gradient(135deg,#FFE3EE,#EBDDFF)}
+@media (max-width:760px){ .homeb{grid-template-columns:1fr;padding:20px} .hb-art{height:190px;order:-1} }
+@media (prefers-reduced-motion:reduce){ .homeb,.hb-h{animation:none} }
 .btn.tiny{padding:4px 10px;font-size:12px;border-width:1.5px}
 .banner{border-radius:16px;padding:12px 16px;background:var(--surface-2);font-size:14px;font-weight:600;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between}
 
@@ -333,6 +351,7 @@ footer{font-size:13px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:6px 16p
 <div id="modal-root"></div>
 <div id="gift-root"></div>
 <script src="config.js"></script>
+<script src="dom-art.js?v=4"></script>
 <script>
 (function(){
 "use strict";
@@ -461,7 +480,7 @@ function pull(force){
     if (!j.ok && j.error === "bad_code"){ lockOut("Код сменился. Войди заново."); return; }
     if (!j.ok) throw new Error("bad");
     setGift(j.gift);
-    if (!!j.home !== !!ui.homeOk){ ui.homeOk = !!j.home; if (S) render(); }
+    if (!!j.home !== !!ui.homeOk){ ui.homeOk = !!j.home; if (S) render(); if (ui.homeOk) setTimeout(homeAnnounce, 1500); }
     if (j.presence){ ui.pres = j.presence; ui.skew = j.presence.now - Date.now(); updPresence(); }
     if (ui.pending > 0) return;
     if (j.changed && j.state){ S = j.state; store("kto-gde-cache", S); setSync("ok"); render(); }
@@ -516,6 +535,7 @@ function render(){
   top.appendChild(header());
   if (!me) top.appendChild(el("div",{class:"banner"},[el("span",{text:"Демо-режим: войди, чтобы попробовать."}), el("button",{type:"button",class:"btn pink small",onclick:openLogin,text:"Войти"})]));
   top.appendChild(hero());
+  if (me && ui.homeOk) top.appendChild(homeBanner());
   root.appendChild(weekNav(curWeek));
   root.appendChild(stats());
   root.appendChild(grid(N));
@@ -760,6 +780,44 @@ function feed(){
   if (!log.length) f.appendChild(el("div",{class:"fi"},[el("span"), el("span",{class:"hint",text:"Здесь появятся изменения: кто что поправил и забронировал."})]));
   log.forEach(function(x){ f.appendChild(el("div",{class:"fi"},[el("span",{class:"av " + x.who,style:"width:26px;height:26px;font-size:10px",text:INIT[x.who] || "?"}), el("div",null,[el("div",{text:x.text}), el("div",{class:"tm",text:ago(x.ts)})])])); });
   return el("section",{class:"sec"},[el("div",{class:"sec-h"},[el("h2",{text:"Что нового"})]), f]);
+}
+
+/* ---------- «Наш дом»: заметный вход ---------- */
+var homePrev = null;
+function homePreview(){
+  if (homePrev != null) return homePrev;
+  if (!window.ART) return "";
+  var A = window.ART, ctx = { night:false, h:20, m:0, day:10, mon:"окт" }, s = A.roomSVG({ id:"pv", w:5, d:4, floor:"oak", wall:"blush", wallH:2.4 });
+  function put(id, col, x, y, r){ var res = A.renderPrims(A.D[id](col, 7, ctx, {}), x, y, r); s += res.body; }
+  put("window", "#FFB3CF", 3, 0, 0); put("picture_heart", "#FF6FA3", 0, 1, 1); put("garland", null, 0, 0, 0);
+  put("rug_round", "#FFB3CF", 1, 1, 0); put("floor_lamp", "#FFE08A", 0, 0, 0); put("sofa", "#FF6FA3", 1, 0, 0); put("plant_big", "#E8875F", 4, 0, 0);
+  put("coffee_table", "#C8925E", 1, 2, 0);
+  s += A.renderPrims(A.bear(3.6, 2.6, 0, 2.5, { crown:true, bow:"#FF2E74" }), 0, 0, 0).body;
+  homePrev = '<svg viewBox="-134 -94 298 246" preserveAspectRatio="xMidYMid meet">' + s + "</svg>";
+  return homePrev;
+}
+function withHTML(e, h){ e.innerHTML = h; return e; }
+function homeBanner(){
+  return el("section",{class:"homeb"},[
+    el("div",{class:"hb-text"},[
+      el("div",{class:"hb-eye",text:"Новое · только для нас двоих"}),
+      el("h2",{text:"Наш дом 🏡"}),
+      el("p",{text:"Обустраиваем дом вместе: мебель, сад, рыбалка, готовка и плюшевые мишки-жильцы. Чем чаще видимся в календаре — тем быстрее растёт дом."}),
+      el("div",{class:"hb-chips"},["🛋 мебель","🌿 сад","🎣 рыбалка","🍳 кухня","🧸 мишки"].map(function(t){ return el("span",{text:t}); })),
+      el("a",{class:"hb-go",href:"dom.html",text:"Зайти домой →"})
+    ]),
+    withHTML(el("a",{class:"hb-art",href:"dom.html","aria-label":"Открыть «Наш дом»"}), homePreview()),
+    el("i",{class:"hb-h h1"}), el("i",{class:"hb-h h2"}), el("i",{class:"hb-h h3"})
+  ]);
+}
+function homeAnnounce(){
+  if (!me || !ui.homeOk || read("kto-gde-home-seen-" + me.who)) return;
+  if (document.querySelector(".gift-ov") || document.getElementById("modal-root").querySelector(".scrim")) return setTimeout(homeAnnounce, 4000);
+  store("kto-gde-home-seen-" + me.who, 1);
+  showModal("🏡 У нас теперь есть дом!", "Общий, на двоих. Его можно обставлять, сажать сад и вместе выполнять задания мишек.", [
+    withHTML(el("a",{class:"hb-modal-art",href:"dom.html"}), homePreview()),
+    el("div",{class:"mrow"},[el("button",{type:"button",class:"btn ghost",text:"Позже",onclick:closeModal}), el("a",{class:"btn pink home-btn",href:"dom.html",text:"Зайти домой →"})])
+  ]);
 }
 
 /* ---------- modals ---------- */

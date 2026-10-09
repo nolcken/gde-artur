@@ -188,7 +188,7 @@ function bindStage(svg){
   });
   svg.addEventListener("pointerup", function(e){ S.down = false; var s0 = st; st = null; if (!s0 || s0.moved) return; tap(e, svg, s0.target); });
   svg.addEventListener("pointercancel", function(){ S.down = false; st = null; });
-  svg.addEventListener("wheel", function(e){ if (!e.ctrlKey && Math.abs(e.deltaY) < 30) return; e.preventDefault(); zoomBy(e.deltaY < 0 ? 1.15 : 1 / 1.15); }, { passive:false });
+  svg.addEventListener("wheel", function(e){ if (!e.ctrlKey) return; e.preventDefault(); zoomBy(e.deltaY < 0 ? 1.15 : 1 / 1.15); }, { passive:false });
 }
 function clampPan(){ var room = DD.ROOM[S.room], lim = (room.w + room.d) * 16 * (1 - 1 / S.zoom) + 10; S.pan[0] = Math.max(-lim * 2, Math.min(lim * 2, S.pan[0])); S.pan[1] = Math.max(-lim, Math.min(lim, S.pan[1])); }
 function zoomBy(k){ S.zoom = Math.max(.9, Math.min(2.8, S.zoom * k)); if (S.zoom <= 1) S.pan = [0, 0]; clampPan(); renderStage(); }
@@ -376,7 +376,9 @@ function render(){
   ]);
   var foot = el("p", { class:"tip center", style:"margin-top:10px" }, [el("span", { id:"sync", text:syncTxt() }), " · общий дом, у Саши появится, когда откроешь"]);
   var main = el("div", { class:"main" }, [el("div", { class:"left" }, [stage, foot]), aside(qp)]);
+  var sy = window.scrollY; app.style.minHeight = app.offsetHeight + "px";
   app.innerHTML = ""; [top, tabs, main].forEach(function(x){ app.appendChild(x); });
+  app.style.minHeight = ""; if (window.scrollY !== sy) window.scrollTo(0, sy);
   renderStage(); bindStage(svg);
   renderDock();
 }

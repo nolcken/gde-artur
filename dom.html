@@ -50,7 +50,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .rtab.on{background:var(--pink);border-color:var(--pink);color:#fff}
 .rtab.locked{opacity:.55}
 .main{display:grid;gap:16px;margin-top:10px;align-items:start}
-@media (min-width:1100px){ .main{grid-template-columns:minmax(0,1fr) 330px} }
+@media (min-width:1100px){ .main{grid-template-columns:minmax(0,1fr) 330px} .left{position:sticky;top:12px;z-index:2} .left .stage > svg{height:min(72vh,640px)} }
 .aside{display:grid;gap:12px}
 .panel{background:#fff;border-radius:22px;padding:14px 14px 12px;box-shadow:0 10px 30px -22px rgba(36,16,58,.45);display:grid;gap:6px}
 .panel h4{margin:0 0 2px;display:flex;justify-content:space-between;align-items:center;font-family:var(--f-mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
@@ -234,9 +234,9 @@ svg .wet-ico{animation:bob 1.4s ease-in-out infinite}
 <div class="wrap" id="app"><div class="gate"><div><h1>🏡</h1><p class="tip">Загружаю дом…</p></div></div></div>
 <div id="layer"></div>
 <script src="config.js"></script>
-<script src="dom-art.js?v=4"></script>
-<script src="dom-data.js?v=4"></script>
-<script src="dom-core.js?v=4"></script>
-<script src="dom.js?v=4"></script>
+<script src="dom-art.js?v=5"></script>
+<script src="dom-data.js?v=5"></script>
+<script src="dom-core.js?v=5"></script>
+<script src="dom.js?v=5"></script>
 </body>
 </html>
