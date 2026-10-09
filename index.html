@@ -374,7 +374,7 @@ footer{font-size:13px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:6px 16p
 <div id="modal-root"></div>
 <div id="gift-root"></div>
 <script src="config.js"></script>
-<script src="dom-art.js?v=4"></script>
+<script src="dom-art.js?v=7"></script>
 <script>
 (function(){
 "use strict";
@@ -606,7 +606,7 @@ function presEl(who){
   if (!me || !p) return null;
   var nowS = Date.now() + (ui.skew || 0), on, txt, was = who === "sasha" ? "была" : "был";
   if (who === me.who){ on = true; txt = "ты на сайте"; }
-  else if (p.seen && nowS - p.seen < 70000 && !(p.off >= p.seen)){ on = true; txt = "на сайте"; }
+  else if (p.seen && nowS - p.seen < 90000 && !(p.off >= p.seen)){ on = true; txt = "на сайте"; }
   else {
     var t = Math.max(p.seen || 0, p.off || 0), age = nowS - t;
     on = false;
@@ -625,6 +625,21 @@ function presEl(who){
 }
 function updPresence(){
   document.querySelectorAll("[data-pres]").forEach(function(x){ var n = presEl(x.getAttribute("data-pres")); if (n) x.replaceWith(n); });
+}
+// пульс «я на сайте»: идёт всегда, пока вкладка видна (даже если открыто окно)
+function ping(){
+  if (DEMO || !me || document.hidden) return;
+  fetch(API, { method:"POST", body:JSON.stringify({ action:"ping", who:me.who, code:me.code }) }).then(function(r){ return r.json(); }).then(function(j){
+    if (j.ok && j.presence){ ui.pres = j.presence; ui.skew = j.presence.now - Date.now(); updPresence(); }
+  }).catch(function(){});
+}
+// сайт обновился — тихо перезагрузиться, когда ничего не открыто
+var APP_V = "12";
+function checkVersion(){
+  fetch("version.txt?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.text() : ""; }).then(function(v){
+    v = (v || "").trim();
+    if (v && v !== APP_V && !document.getElementById("modal-root").firstChild && !document.querySelector(".gift-ov") && !ui.pending) location.reload();
+  }).catch(function(){});
 }
 function bye(){
   if (DEMO || !me || !navigator.sendBeacon) return;
@@ -1262,9 +1277,11 @@ else if (S) render();
 if (!DEMO){
   if (me) pull(true).then(function(){ if (me && !S) loadFailed(); });
   setInterval(function(){ if (!document.hidden && !document.getElementById("modal-root").firstChild) pull(false); }, 20000);
-  document.addEventListener("visibilitychange", function(){ if (!document.hidden) pull(false); else bye(); });
+  document.addEventListener("visibilitychange", function(){ if (!document.hidden){ pull(false); checkVersion(); } else bye(); });
   window.addEventListener("pagehide", bye);
-  setInterval(updPresence, 30000);
+  setInterval(updPresence, 15000);
+  setInterval(ping, 25000);
+  setInterval(checkVersion, 5 * 60000);
 }
 setInterval(function(){ if (!document.getElementById("modal-root").firstChild) render(); }, 60000);
 })();

@@ -277,6 +277,16 @@ function npcTick(){
   renderStage();
 }
 
+/* ---------- присутствие и обновления ---------- */
+var APP_V = "12";
+function bye(){ try { if (navigator.sendBeacon) navigator.sendBeacon(API, JSON.stringify({ action:"bye", who:me.who, code:me.code })); } catch (e) {} }
+function checkVersion(){
+  fetch("version.txt?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.text() : ""; }).then(function(v){
+    v = (v || "").trim();
+    if (v && v !== APP_V && !S.sheet && !S.place && !S.hunt && !S.inflight && !S.pending.length && !document.querySelector(".game")) location.reload();
+  }).catch(function(){});
+}
+
 /* ---------- сердечки на фоне ---------- */
 function heartSVG(fill, stroke){ return '<svg viewBox="0 0 32 30"><path d="M16 28.5C7 22 1.5 16.6 1.5 9.8 1.5 5.2 5 1.5 9.4 1.5c2.8 0 5.1 1.4 6.6 3.7 1.5-2.3 3.8-3.7 6.6-3.7 4.4 0 7.9 3.7 7.9 8.3 0 6.8-5.5 12.2-14.5 18.7z" fill="' + fill + '"' + (stroke ? ' stroke="' + stroke + '" stroke-width="1.5"' : "") + '/><ellipse cx="9" cy="8" rx="3.2" ry="2" fill="#fff" opacity=".45" transform="rotate(-30 9 8)"/></svg>'; }
 function bgHearts(){
@@ -828,6 +838,9 @@ function boot(){
     bgHearts(); setTimeout(catchHeart, 12000);
     setInterval(function(){ if (!document.hidden && Date.now() - S.lastPull > 14000) pull(); }, 5000);
     setInterval(function(){ if (!S.place) renderStage(); }, 30000);
+    setInterval(checkVersion, 5 * 60000);
+    window.addEventListener("pagehide", bye);
+    document.addEventListener("visibilitychange", function(){ if (document.hidden) bye(); else checkVersion(); });
     document.addEventListener("visibilitychange", function(){ if (!document.hidden){ pull(); var vk2 = "dom-visit-" + me.who + "-" + CO.dk(now()) + "-" + S.local.created; if (!read(vk2)){ store(vk2, 1); act("visit", {}, true); } } });
   }).catch(function(){ gate("Нет связи с сервером", "Проверь интернет и обнови страницу"); });
 }
