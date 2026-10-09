@@ -35,14 +35,44 @@ function act(t, a, quiet){
   var op = { t:t, a:a || {}, who:me.who, ts:now() }, test = CO.clone(S.local), before = { c:test.coins, h:test.hearts, l:CO.level(test) };
   var r = CO.apply(test, op);
   if (!r.ok){ if (!quiet) toast(r.err); return null; }
-  S.local = test; S.pending.push(op); save();
   var dc = test.coins - before.c, dh = test.hearts - before.h, nl = CO.level(test);
+  try { op.d = describe(op, r, test); if (nl > before.l) op.d = (op.d ? op.d + " · " : "") + "🏡 дом вырос до " + nl + "-го уровня!"; } catch (e) {}
+  S.local = test; S.pending.push(op); save();
   render();
   if (dc) bump("coins", (dc > 0 ? "+" : "") + dc + " 🪙", dc > 0 ? "#B58500" : "#6E5A80");
   if (dh) bump("hearts", (dh > 0 ? "+" : "") + dh + " 💗", "#FF2E74");
   if (nl > before.l) setTimeout(function(){ levelUp(nl); }, 300);
   if (S.sheet && S.sheet.refresh) S.sheet.refresh();
   return r;
+}
+// что сделал игрок — для уведомлений в Telegram второму
+function describe(op, r, h){
+  var a = op.a || {}, f = me.who === "sasha", g = function(m, w){ return f ? w : m; }, it = a.id && ITEM[a.id], room = a.room && DD.ROOM[a.room];
+  var gi = function(k){ var x = CO.goodInfo(k); return x ? x.e + " " + x.n : k; };
+  switch (op.t){
+    case "buy": return g("купил", "купила") + " «" + it.n + "»" + ((a.n || 1) > 1 ? " ×" + a.n : "");
+    case "buyGood": return g("купил", "купила") + " " + gi(a.k) + " ×" + (a.n || 1);
+    case "place": return g("поставил", "поставила") + " «" + it.n + "» — " + (room ? room.n : "");
+    case "style": return g("сменил", "сменила") + " " + (a.kind === "floor" ? "пол" : "стены") + " в «" + room.n + "»: " + (a.kind === "floor" ? A.FLOORS : A.WALLS)[a.id].name.toLowerCase();
+    case "unlock": return "🎉 " + g("открыл", "открыла") + " комнату «" + room.n + "»";
+    case "plant": return "🌱 " + g("посадил", "посадила") + " " + DD.CROP[a.crop].n.toLowerCase();
+    case "water": return "💧 " + g("полил", "полила") + " грядки (" + (r.n || 1) + ")";
+    case "harvest": return g("собрал", "собрала") + " урожай: " + DD.CROP[r.id].e + " " + DD.CROP[r.id].n.toLowerCase() + " ×" + r.n;
+    case "pick": return g("собрал", "собрала") + " " + DD.FRUITS[r.id].e + " " + DD.FRUITS[r.id].n.toLowerCase() + " ×" + r.n;
+    case "sell": return g("продал", "продала") + " " + gi(a.k) + " ×" + (a.n || 1) + " (+" + r.coins + " 🪙)";
+    case "fish": if (!a.id) return null; var fi = DD.FISHI[a.id];
+      return fi.note ? "🍾 " + g("выловил", "выловила") + " бутылку с запиской" : (a.id === "goldfish" ? "✨ " : "🎣 ") + g("поймал", "поймала") + " " + fi.n.toLowerCase();
+    case "cook": var rc = DD.RECIPE[a.rec]; return "🍳 " + g("приготовил", "приготовила") + " " + rc.e + " " + rc.n.toLowerCase() + " " + "★★★".slice(0, a.stars || 1);
+    case "gift": return "💝 " + g("угостил", "угостила") + " тебя: " + gi(a.k);
+    case "order": return g("выполнил", "выполнила") + " заказ соседа";
+    case "hunt": return "🧸 " + g("сыграл", "сыграла") + " в прятки: " + (a.found || 0) + " из 5";
+    case "claimQ": var q = DD.Q.filter(function(x){ return x.id === a.q; })[0]; return "📜 " + g("выполнил", "выполнила") + " задание «" + (q ? q.t : a.q) + "»";
+    case "claimD": return g("выполнил", "выполнила") + " ежедневное задание";
+    case "claimMail": return g("забрал", "забрала") + " награды за календарь 📬";
+    case "upgrade": var U = DD.UPGRADES.filter(function(x){ return x.id === a.id; })[0]; return g("улучшил", "улучшила") + " " + (U ? U.e + " " + U.n.toLowerCase() : a.id);
+    case "unbox": return "📦 " + g("распаковал", "распаковала") + " коробку: " + r.gift.t.toLowerCase();
+  }
+  return null;
 }
 function bump(id, txt, color){ var c = document.getElementById("hud-" + id); if (!c) return; var b = c.getBoundingClientRect(); floatAt(b.left + 6, b.top + 4, txt, color); c.classList.remove("pop"); void c.offsetWidth; c.classList.add("pop"); }
 var saveTimer;
@@ -51,7 +81,8 @@ function flush(){
   if (S.inflight || (!S.pending.length && S.committed.v)) return;
   S.inflight = true; setSync("saving");
   var n = S.pending.length, snap = CO.clone(S.local); delete snap.v;
-  api({ action:"homeSave", base:S.committed.v || 0, home:snap }).then(function(j){
+  var events = S.pending.slice(0, n).map(function(o){ return o.d; }).filter(Boolean);
+  api({ action:"homeSave", base:S.committed.v || 0, home:snap, events:events }).then(function(j){
     S.inflight = false;
     if (j.ok){ snap.v = j.v; S.committed = snap; S.pending = S.pending.slice(n); recompute(); setSync("ok"); if (S.pending.length) save(); }
     else if (j.error === "conflict" && !j.home){ location.reload(); }
@@ -278,7 +309,7 @@ function npcTick(){
 }
 
 /* ---------- присутствие и обновления ---------- */
-var APP_V = "12";
+var APP_V = "13";
 function bye(){ try { if (navigator.sendBeacon) navigator.sendBeacon(API, JSON.stringify({ action:"bye", who:me.who, code:me.code })); } catch (e) {} }
 function checkVersion(){
   fetch("version.txt?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.text() : ""; }).then(function(v){

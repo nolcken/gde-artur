@@ -374,7 +374,7 @@ footer{font-size:13px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:6px 16p
 <div id="modal-root"></div>
 <div id="gift-root"></div>
 <script src="config.js"></script>
-<script src="dom-art.js?v=7"></script>
+<script src="dom-art.js?v=8"></script>
 <script>
 (function(){
 "use strict";
@@ -634,7 +634,7 @@ function ping(){
   }).catch(function(){});
 }
 // сайт обновился — тихо перезагрузиться, когда ничего не открыто
-var APP_V = "12";
+var APP_V = "13";
 function checkVersion(){
   fetch("version.txt?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.text() : ""; }).then(function(v){
     v = (v || "").trim();
