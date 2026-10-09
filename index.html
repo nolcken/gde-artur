@@ -280,7 +280,18 @@ footer{font-size:13px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:6px 16p
   .modal{width:100%;border-radius:24px 24px 0 0;padding-bottom:calc(22px + env(safe-area-inset-bottom,0px));max-height:88vh}
 }
 /* gift */
-.gshelf{margin-top:16px;padding:16px 18px;border-radius:26px;background:var(--surface);border:1.5px solid var(--line);display:grid;gap:10px}
+.me-row{display:flex;align-items:center;gap:10px}
+.gifticon{position:relative;width:52px;height:52px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;transition:transform .15s,border-color .15s;padding:0}
+.gifticon:hover{transform:translateY(-2px) rotate(-6deg);border-color:#FF6FA3}
+.gi-box{position:relative;width:22px;height:16px;margin-top:6px;border-radius:3px;background:linear-gradient(135deg,#FF6FA3,#B05CFF)}
+.gi-lid{position:absolute;left:-3px;right:-3px;top:-6px;height:6px;border-radius:2px;background:#FF2E74}
+.gi-rib{position:absolute;left:50%;top:-6px;bottom:0;width:4px;margin-left:-2px;background:#FFD84D}
+.gi-rib::before,.gi-rib::after{content:"";position:absolute;top:-6px;width:8px;height:6px;border:2.5px solid #FFD84D;border-radius:50%;box-sizing:border-box}
+.gi-rib::before{right:2px;transform:rotate(-20deg)}.gi-rib::after{left:2px;transform:rotate(20deg)}
+.gifticon:hover .gi-lid,.gifticon.new .gi-lid{animation:lid 1.6s ease-in-out infinite}
+@keyframes lid{0%,60%,100%{transform:none}70%{transform:translateY(-3px) rotate(-8deg)}85%{transform:translateY(-1px) rotate(4deg)}}
+.gi-dot{position:absolute;top:4px;right:4px;width:11px;height:11px;border-radius:50%;background:#FF2E74;border:2px solid var(--surface)}
+.modal .gs-row{grid-template-columns:1fr}
 .gs-h{display:flex;justify-content:space-between;align-items:baseline;font-family:"Unbounded",sans-serif;font-weight:800;font-size:17px}
 .gs-h small{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:12px;color:var(--ink-2)}
 .gs-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px}
@@ -548,7 +559,6 @@ function render(){
   if (!me) top.appendChild(el("div",{class:"banner"},[el("span",{text:"Демо-режим: войди, чтобы попробовать."}), el("button",{type:"button",class:"btn pink small",onclick:openLogin,text:"Войти"})]));
   top.appendChild(hero());
   if (me && ui.homeOk) top.appendChild(homeBanner());
-  if (me && ui.gift) top.appendChild(giftShelf());
   root.appendChild(weekNav(curWeek));
   root.appendChild(stats());
   root.appendChild(grid(N));
@@ -568,7 +578,7 @@ function header(){
       el("h1",null,["Кто где", el("span",{class:"q",text:"?"})])
     ]),
     el("div",{class:"me"},[
-      me ? el("div",{class:"mechip"},["Ты: " + NAME[me.who], el("span",{class:"av " + me.who,text:INIT[me.who]}), el("button",{type:"button",class:"btn ghost tiny",onclick:logout,text:"Выйти"})])
+      me ? el("div",{class:"me-row"},[giftIcon(), el("div",{class:"mechip"},["Ты: " + NAME[me.who], el("span",{class:"av " + me.who,text:INIT[me.who]}), el("button",{type:"button",class:"btn ghost tiny",onclick:logout,text:"Выйти"})])])
          : el("button",{type:"button",class:"btn",onclick:openLogin,text:"Войти"}),
       syncEl()
     ])
@@ -807,20 +817,31 @@ function homePreview(){
   homePrev = '<svg viewBox="-134 -94 298 246" preserveAspectRatio="xMidYMid meet">' + s + "</svg>";
   return homePrev;
 }
-/* ---------- шкатулка подарков ---------- */
+/* ---------- склад подарков: значок в шапке ---------- */
+function giftUnseen(){ return ui.gift && !ui.gift.preview && !read("kto-gde-gift-" + ui.gift.id); }
+function giftIcon(){
+  if (!ui.gift) return null;
+  return el("button",{type:"button",class:"gifticon" + (giftUnseen() ? " new" : ""),title:"Склад подарков","aria-label":"Склад подарков",onclick:openGiftStore},[
+    el("span",{class:"gi-box","aria-hidden":"true"},[el("i",{class:"gi-lid"}), el("i",{class:"gi-rib"})]),
+    giftUnseen() ? el("span",{class:"gi-dot"}) : null
+  ]);
+}
+function openGiftStore(){
+  showModal("🎁 Склад подарков", ui.gift && ui.gift.preview ? "Все подарки для Саши. Открывай, чтобы посмотреть, как она их видит." : "Все подарки от Артура — можно открывать сколько угодно.", [giftShelf()]);
+}
 function giftShelf(){
   var gifts = ui.gift ? [ui.gift] : [];
   var cards = gifts.map(function(g){
     var mine = !!g.preview, opens = g.opens || 0;
     var sub = mine ? (opens ? "Саша открывала " + opens + " " + (opens % 10 >= 2 && opens % 10 <= 4 && (opens % 100 < 12 || opens % 100 > 14) ? "раза" : "раз") : "Саша ещё не открывала")
                    : read("kto-gde-gift-" + g.id) ? "Можно открывать сколько угодно" : "Ещё не открыт!";
-    return el("button",{type:"button",class:"gcard",onclick:openGift},[
+    return el("button",{type:"button",class:"gcard",onclick:function(){ closeModal(); setTimeout(openGift, 200); }},[
       el("span",{class:"gico",text:"🎁"}),
       el("span",{class:"gtx"},[el("b",{text:mine ? "Подарок для Саши" : "Подарок от Артура"}), el("small",{text:"8 октября · " + sub})]),
       el("span",{class:"gopen",text:mine ? "Посмотреть" : "Открыть"})
     ]);
   });
-  return el("section",{class:"gshelf"},[el("div",{class:"gs-h"},[el("span",{text:"🎀 Шкатулка подарков"}), el("small",{text:gifts.length + " " + (gifts.length === 1 ? "подарок" : "подарка")})]), el("div",{class:"gs-row"},cards)]);
+  return el("div",{class:"gs-row"},cards);
 }
 function withHTML(e, h){ e.innerHTML = h; return e; }
 function homeBanner(){

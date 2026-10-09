@@ -54,6 +54,7 @@ function flush(){
   api({ action:"homeSave", base:S.committed.v || 0, home:snap }).then(function(j){
     S.inflight = false;
     if (j.ok){ snap.v = j.v; S.committed = snap; S.pending = S.pending.slice(n); recompute(); setSync("ok"); if (S.pending.length) save(); }
+    else if (j.error === "conflict" && !j.home){ location.reload(); }
     else if (j.error === "conflict"){ S.committed = j.home || S.committed; recompute(); render(); setSync("saving"); flush(); }
     else { setSync("err"); setTimeout(flush, 4000); }
   }).catch(function(){ S.inflight = false; setSync("err"); setTimeout(flush, 4000); });
@@ -65,6 +66,7 @@ function pull(){
     if (!j.ok) return;
     if (j.now) S.skew = j.now - Date.now();
     if (j.cal) S.cal = j.cal;
+    if (j.changed && !j.home && S.committed && S.committed.v){ location.reload(); return; }
     if (j.changed && j.home && !S.inflight){ S.committed = j.home; recompute(); if (!S.place) render(); if (S.sheet && S.sheet.refresh) S.sheet.refresh(); }
     else renderDock();
   }).catch(function(){});
@@ -355,7 +357,7 @@ function render(){
   var cf = CO.comfort(h), L = DD.levelOf(cf), n0 = DD.levelNeed(L), n1 = DD.levelNeed(L + 1), pr = Math.max(0, Math.min(1, (cf - n0) / (n1 - n0)));
   var top = el("div", { class:"top" }, [
     el("a", { class:"back", href:"index.html", text:"← Календарь" }),
-    el("h1", { class:"title", html:'<small>Артур × Саша · β, видишь только ты</small>Наш дом' }),
+    el("h1", { class:"title", html:'<small>Артур × Саша · общий дом</small>Наш дом' }),
     el("div", { class:"hud" }, [
       el("span", { class:"chip lvl", id:"hud-level", title:"Уют " + cf + " / " + n1 }, ["🏡 " + L, el("span", { class:"lvlbar" }, [el("i", { style:"width:" + Math.round(pr * 100) + "%" })]), el("small", { text:cf + "/" + n1, style:"font-family:var(--f-mono);font-size:11px;opacity:.8" })]),
       el("span", { class:"chip", id:"hud-coins", text:"🪙 " + h.coins }),
@@ -374,7 +376,7 @@ function render(){
     S.mode === "edit" || S.place ? editBar() : null,
     S.hunt ? huntBar() : null,
   ]);
-  var foot = el("p", { class:"tip center", style:"margin-top:10px" }, [el("span", { id:"sync", text:syncTxt() }), " · общий дом, у Саши появится, когда откроешь"]);
+  var foot = el("p", { class:"tip center", style:"margin-top:10px" }, [el("span", { id:"sync", text:syncTxt() }), " · дом общий: всё, что делает один, видит и второй"]);
   var main = el("div", { class:"main" }, [el("div", { class:"left" }, [stage, foot]), aside(qp)]);
   var sy = window.scrollY; app.style.minHeight = app.offsetHeight + "px";
   app.innerHTML = ""; [top, tabs, main].forEach(function(x){ app.appendChild(x); });
@@ -608,7 +610,7 @@ function openQuests(){
     box.appendChild(el("div", { class:"sec", text:"На сегодня · серия дней вместе: " + (h.streak.n || 0) + " 🔥" }));
     box.appendChild(el("div", { class:"list" }, d.tasks.map(function(id){
       var t = DD.DAILY.filter(function(x){ return x.id === id; })[0], p = CO.dailyProgress(h, id, S.cal, me.who, now()), got = d.claimed[id];
-      return el("div", { class:"li" + (got ? " done" : "") }, [el("span", { class:"em", text:got ? "✅" : "☀️" }), el("div", { class:"bd" }, [el("b", { text:t.t }), el("small", { text:p[0] + "/" + p[1] + " · " + money(t.r.coins, t.r.hearts) + (id === "both" ? " · Саша присоединится, когда откроешь ей дом" : "") }), el("div", { class:"prog" }, [el("i", { style:"width:" + Math.round(p[0] / p[1] * 100) + "%" })])]),
+      return el("div", { class:"li" + (got ? " done" : "") }, [el("span", { class:"em", text:got ? "✅" : "☀️" }), el("div", { class:"bd" }, [el("b", { text:t.t }), el("small", { text:p[0] + "/" + p[1] + " · " + money(t.r.coins, t.r.hearts) }), el("div", { class:"prog" }, [el("i", { style:"width:" + Math.round(p[0] / p[1] * 100) + "%" })])]),
         got ? null : el("button", { class:"btn", text:"Забрать", disabled:p[0] < p[1], onclick:function(){ act("claimD", { id:id }); } })]);
     })));
     box.appendChild(el("p", { class:"tip", text:"Выполните все четыре — бонус 🪙 50 и 💗 1." }));
@@ -819,14 +821,14 @@ function boot(){
     if (!S.local.rooms[S.room] || !S.local.rooms[S.room].open) S.room = "living";
     render();
     if (!S.committed.v) flush();
-    var vk = "dom-visit-" + me.who + "-" + CO.dk(now()); if (!read(vk)){ store(vk, 1); act("visit", {}, true); }
+    var vk = "dom-visit-" + me.who + "-" + CO.dk(now()) + "-" + S.local.created; if (!read(vk)){ store(vk, 1); act("visit", {}, true); }
     if (!S.local.intro) intro();
     if (!S.local.boxes) act("boxes", {}, true);
     setInterval(npcTick, 1300);
     bgHearts(); setTimeout(catchHeart, 12000);
     setInterval(function(){ if (!document.hidden && Date.now() - S.lastPull > 14000) pull(); }, 5000);
     setInterval(function(){ if (!S.place) renderStage(); }, 30000);
-    document.addEventListener("visibilitychange", function(){ if (!document.hidden){ pull(); var vk2 = "dom-visit-" + me.who + "-" + CO.dk(now()); if (!read(vk2)){ store(vk2, 1); act("visit", {}, true); } } });
+    document.addEventListener("visibilitychange", function(){ if (!document.hidden){ pull(); var vk2 = "dom-visit-" + me.who + "-" + CO.dk(now()) + "-" + S.local.created; if (!read(vk2)){ store(vk2, 1); act("visit", {}, true); } } });
   }).catch(function(){ gate("Нет связи с сервером", "Проверь интернет и обнови страницу"); });
 }
 window.addEventListener("keydown", function(e){ if (e.key === "Escape"){ if (S.place){ S.place = null; S.ghost = null; renderStage(); } else closeSheet(); } if ((e.key === "r" || e.key === "к") && S.place){ var it = ITEM[S.place.id]; if (it.k !== "wall"){ S.place.r = S.place.r ? 0 : 1; if (S.ghost){ S.ghost.r = S.place.r; } renderStage(); } } });
