@@ -280,7 +280,19 @@ footer{font-size:13px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:6px 16p
   .modal{width:100%;border-radius:24px 24px 0 0;padding-bottom:calc(22px + env(safe-area-inset-bottom,0px));max-height:88vh}
 }
 /* gift */
-.gift-btn{animation:glow 2s ease-in-out infinite}
+.gshelf{margin-top:16px;padding:16px 18px;border-radius:26px;background:var(--surface);border:1.5px solid var(--line);display:grid;gap:10px}
+.gs-h{display:flex;justify-content:space-between;align-items:baseline;font-family:"Unbounded",sans-serif;font-weight:800;font-size:17px}
+.gs-h small{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:12px;color:var(--ink-2)}
+.gs-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px}
+.gcard{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:18px;border:1.5px solid var(--line);background:var(--surface-2);color:var(--ink);text-align:left;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.gcard:hover{transform:translateY(-2px);box-shadow:0 12px 24px -16px rgba(255,46,116,.6)}
+.gico{flex:0 0 auto;width:48px;height:48px;border-radius:14px;display:grid;place-items:center;font-size:26px;background:linear-gradient(135deg,#FF6FA3,#9B7BFF);animation:gbob 2.4s ease-in-out infinite}
+@keyframes gbob{50%{transform:translateY(-3px) rotate(-4deg)}}
+.gtx{flex:1 1 auto;min-width:0;display:grid;gap:2px}
+.gtx b{font-size:15px}
+.gtx small{font-size:12.5px;color:var(--ink-2);font-weight:600}
+.gopen{flex:0 0 auto;padding:7px 12px;border-radius:999px;background:#FF2E74;color:#fff;font-weight:800;font-size:12.5px}
+@media (prefers-reduced-motion:reduce){ .gico{animation:none} }
 @keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(255,46,116,.45)}50%{box-shadow:0 0 0 8px rgba(255,46,116,0)}}
 .gift-ov{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:16px;background:radial-gradient(circle at 50% 40%,#3a1446 0%,#12081c 70%);color:#fff;overflow:auto;animation:fadeIn .35s ease both}
 .gift-ov.closing{animation:fadeOut .25s ease both}
@@ -536,6 +548,7 @@ function render(){
   if (!me) top.appendChild(el("div",{class:"banner"},[el("span",{text:"Демо-режим: войди, чтобы попробовать."}), el("button",{type:"button",class:"btn pink small",onclick:openLogin,text:"Войти"})]));
   top.appendChild(hero());
   if (me && ui.homeOk) top.appendChild(homeBanner());
+  if (me && ui.gift) top.appendChild(giftShelf());
   root.appendChild(weekNav(curWeek));
   root.appendChild(stats());
   root.appendChild(grid(N));
@@ -557,8 +570,6 @@ function header(){
     el("div",{class:"me"},[
       me ? el("div",{class:"mechip"},["Ты: " + NAME[me.who], el("span",{class:"av " + me.who,text:INIT[me.who]}), el("button",{type:"button",class:"btn ghost tiny",onclick:logout,text:"Выйти"})])
          : el("button",{type:"button",class:"btn",onclick:openLogin,text:"Войти"}),
-      me && ui.gift ? el("button",{type:"button",class:"btn pink small gift-btn",onclick:openGift,text:ui.gift.preview ? "🎁 Предпросмотр подарка" : "🎁 Подарок"}) : null,
-      me && ui.homeOk ? el("a",{class:"btn small home-btn",href:"dom.html",text:"🏡 Наш дом"}) : null,
       syncEl()
     ])
   ]);
@@ -795,6 +806,21 @@ function homePreview(){
   s += A.renderPrims(A.bear(3.6, 2.6, 0, 2.5, { crown:true, bow:"#FF2E74" }), 0, 0, 0).body;
   homePrev = '<svg viewBox="-134 -94 298 246" preserveAspectRatio="xMidYMid meet">' + s + "</svg>";
   return homePrev;
+}
+/* ---------- шкатулка подарков ---------- */
+function giftShelf(){
+  var gifts = ui.gift ? [ui.gift] : [];
+  var cards = gifts.map(function(g){
+    var mine = !!g.preview, opens = g.opens || 0;
+    var sub = mine ? (opens ? "Саша открывала " + opens + " " + (opens % 10 >= 2 && opens % 10 <= 4 && (opens % 100 < 12 || opens % 100 > 14) ? "раза" : "раз") : "Саша ещё не открывала")
+                   : read("kto-gde-gift-" + g.id) ? "Можно открывать сколько угодно" : "Ещё не открыт!";
+    return el("button",{type:"button",class:"gcard",onclick:openGift},[
+      el("span",{class:"gico",text:"🎁"}),
+      el("span",{class:"gtx"},[el("b",{text:mine ? "Подарок для Саши" : "Подарок от Артура"}), el("small",{text:"8 октября · " + sub})]),
+      el("span",{class:"gopen",text:mine ? "Посмотреть" : "Открыть"})
+    ]);
+  });
+  return el("section",{class:"gshelf"},[el("div",{class:"gs-h"},[el("span",{text:"🎀 Шкатулка подарков"}), el("small",{text:gifts.length + " " + (gifts.length === 1 ? "подарок" : "подарка")})]), el("div",{class:"gs-row"},cards)]);
 }
 function withHTML(e, h){ e.innerHTML = h; return e; }
 function homeBanner(){
