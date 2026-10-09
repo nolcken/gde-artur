@@ -205,6 +205,11 @@ function apply(h, op){
       log(h, who, "📦 " + nm + " " + (who === "sasha" ? "распаковала" : "распаковал") + " коробку: " + g0.t.toLowerCase(), ts);
       return { ok:true, gift:g0 };
     }
+    case "catchHeart": {
+      var Pc = pl(h, who), dc = dk(ts); if (!Pc.ch || Pc.ch.d !== dc) Pc.ch = { d:dc, n:0 };
+      if (Pc.ch.n >= 6) return E("На сегодня сердечки только для красоты");
+      Pc.ch.n++; h.coins += 5; if (Pc.ch.n === 6) h.hearts += 1; return { ok:true, n:Pc.ch.n };
+    }
     case "npcGift": {
       var Pn = pl(h, who), dn = dk(ts); if (Pn.npc === dn) return E("Сегодня мишка уже дарил подарок");
       Pn.npc = dn; h.coins += 15; return { ok:true };

@@ -20,6 +20,19 @@
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);-webkit-tap-highlight-color:transparent}
 button{font:inherit;color:inherit;cursor:pointer}
 .wrap{max-width:1180px;margin:0 auto;padding:14px 16px 120px}
+#bghearts{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.wrap{position:relative;z-index:1}
+.bh{position:absolute;bottom:-60px;animation:rise linear infinite}
+.bh i{display:block;animation:sway ease-in-out infinite alternate}
+.bh svg{display:block;width:100%;height:100%}
+@keyframes rise{from{transform:translateY(0)}to{transform:translateY(calc(-100vh - 120px))}}
+@keyframes sway{from{transform:translateX(-14px) rotate(-12deg)}to{transform:translateX(14px) rotate(12deg)}}
+.catch{position:fixed;z-index:15;bottom:-60px;width:44px;height:44px;border:0;padding:0;background:none;cursor:pointer;animation:rise 15s linear forwards;filter:drop-shadow(0 4px 10px rgba(255,46,116,.45))}
+.catch i{display:block;width:100%;height:100%;animation:sway 1.6s ease-in-out infinite alternate}
+.catch svg{display:block;width:100%;height:100%}
+.catch.pop{animation:popout .45s forwards}
+@keyframes popout{to{transform:scale(1.8);opacity:0}}
+@media (prefers-reduced-motion:reduce){.bh,.bh i,.catch,.catch i{animation:none!important}}
 .top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .back{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink);font-weight:800;font-size:13px;padding:8px 12px;border-radius:999px;background:#fff;border:1.5px solid var(--line)}
 .title{font-family:var(--f-display);font-weight:800;font-size:clamp(22px,4vw,34px);letter-spacing:-.02em;margin:0;flex:1 1 auto}
@@ -217,12 +230,13 @@ svg .wet-ico{animation:bob 1.4s ease-in-out infinite}
 </style>
 </head>
 <body>
+<div id="bghearts" aria-hidden="true"></div>
 <div class="wrap" id="app"><div class="gate"><div><h1>🏡</h1><p class="tip">Загружаю дом…</p></div></div></div>
 <div id="layer"></div>
 <script src="config.js"></script>
-<script src="dom-art.js?v=3"></script>
-<script src="dom-data.js?v=3"></script>
-<script src="dom-core.js?v=3"></script>
-<script src="dom.js?v=3"></script>
+<script src="dom-art.js?v=4"></script>
+<script src="dom-data.js?v=4"></script>
+<script src="dom-core.js?v=4"></script>
+<script src="dom.js?v=4"></script>
 </body>
 </html>

@@ -275,6 +275,36 @@ function npcTick(){
   renderStage();
 }
 
+/* ---------- сердечки на фоне ---------- */
+function heartSVG(fill, stroke){ return '<svg viewBox="0 0 32 30"><path d="M16 28.5C7 22 1.5 16.6 1.5 9.8 1.5 5.2 5 1.5 9.4 1.5c2.8 0 5.1 1.4 6.6 3.7 1.5-2.3 3.8-3.7 6.6-3.7 4.4 0 7.9 3.7 7.9 8.3 0 6.8-5.5 12.2-14.5 18.7z" fill="' + fill + '"' + (stroke ? ' stroke="' + stroke + '" stroke-width="1.5"' : "") + '/><ellipse cx="9" cy="8" rx="3.2" ry="2" fill="#fff" opacity=".45" transform="rotate(-30 9 8)"/></svg>'; }
+function bgHearts(){
+  var box = document.getElementById("bghearts"); if (!box || box.childNodes.length) return;
+  var cols = ["#FF6FA3", "#FF9DBD", "#FFB3CF", "#C9B6FF", "#FFD84D", "#FF2E74"];
+  for (var i = 0; i < 18; i++){
+    var sz = 12 + Math.random() * 24, dur = 22 + Math.random() * 20;
+    var b = el("span", { class:"bh", style:"left:" + (Math.random() * 100).toFixed(1) + "%;width:" + sz.toFixed(0) + "px;height:" + sz.toFixed(0) + "px;opacity:" + (.14 + Math.random() * .2).toFixed(2) + ";animation-duration:" + dur.toFixed(1) + "s;animation-delay:-" + (Math.random() * dur).toFixed(1) + "s" },
+      [el("i", { style:"width:100%;height:100%;animation-duration:" + (2.5 + Math.random() * 3).toFixed(1) + "s", html:heartSVG(cols[i % cols.length]) })]);
+    box.appendChild(b);
+  }
+}
+// иногда пролетает «живое» сердечко — его можно поймать
+function catchHeart(){
+  if (!document.hidden && !document.querySelector(".game") && H()){
+    var x = Math.random() < .5 ? 2 + Math.random() * 12 : 86 + Math.random() * 10;
+    if (window.innerWidth < 700) x = 6 + Math.random() * 80;
+    var btn = el("button", { class:"catch", title:"Поймай сердечко!", "aria-label":"Поймать сердечко", style:"left:" + x.toFixed(1) + "vw", html:"<i>" + heartSVG("#FF2E74", "#fff") + "</i>" });
+    btn.addEventListener("click", function(e){
+      if (btn.classList.contains("pop")) return;
+      var r = act("catchHeart", {}, true); btn.classList.add("pop");
+      floatAt(e.clientX - 10, e.clientY - 20, r ? (r.n === 6 ? "+5 🪙 +1 💗" : "+5 🪙") : "💗", "#FF2E74");
+      setTimeout(function(){ btn.remove(); }, 500);
+    });
+    btn.addEventListener("animationend", function(ev){ if (ev.animationName === "rise") btn.remove(); });
+    document.body.appendChild(btn);
+  }
+  setTimeout(catchHeart, 40000 + Math.random() * 50000);
+}
+
 /* ---------- боковая панель ---------- */
 function panel(title, kids, extra){ return el("section", { class:"panel" }, [el("h4", null, [title, extra || null])].concat(kids)); }
 function aside(qp){
@@ -791,12 +821,13 @@ function boot(){
     if (!S.local.intro) intro();
     if (!S.local.boxes) act("boxes", {}, true);
     setInterval(npcTick, 1300);
+    bgHearts(); setTimeout(catchHeart, 12000);
     setInterval(function(){ if (!document.hidden && Date.now() - S.lastPull > 14000) pull(); }, 5000);
     setInterval(function(){ if (!S.place) renderStage(); }, 30000);
     document.addEventListener("visibilitychange", function(){ if (!document.hidden){ pull(); var vk2 = "dom-visit-" + me.who + "-" + CO.dk(now()); if (!read(vk2)){ store(vk2, 1); act("visit", {}, true); } } });
   }).catch(function(){ gate("Нет связи с сервером", "Проверь интернет и обнови страницу"); });
 }
 window.addEventListener("keydown", function(e){ if (e.key === "Escape"){ if (S.place){ S.place = null; S.ghost = null; renderStage(); } else closeSheet(); } if ((e.key === "r" || e.key === "к") && S.place){ var it = ITEM[S.place.id]; if (it.k !== "wall"){ S.place.r = S.place.r ? 0 : 1; if (S.ghost){ S.ghost.r = S.place.r; } renderStage(); } } });
-window.DOMDBG = { S:S, act:act, render:render, switchRoom:switchRoom, openShop:openShop, openBag:openBag, openQuests:openQuests, openFish:openFish, openCook:openCook, startHunt:startHunt, openPlot:openPlot };
+window.DOMDBG = { catchHeart:catchHeart, S:S, act:act, render:render, switchRoom:switchRoom, openShop:openShop, openBag:openBag, openQuests:openQuests, openFish:openFish, openCook:openCook, startHunt:startHunt, openPlot:openPlot };
 boot();
 })();
