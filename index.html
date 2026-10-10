@@ -363,6 +363,45 @@ footer{font-size:13px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:6px 16p
 .gift-reply .btn{justify-self:start;background:#FF2E74;border-color:#FF2E74;color:#fff}
 .gift-note{font-size:13.5px;color:rgba(255,255,255,.72);margin:0}
 @media (max-width:720px){ .gift-card{grid-template-columns:minmax(0,1fr);gap:22px} .polaroid{width:min(340px,100%);justify-self:center} .gift-ov{place-items:start center;padding-top:72px;padding-bottom:40px} }
+/* капсулы времени */
+.gstore{display:grid;gap:12px}
+.cap-intro{margin:-4px 0 0;font-size:13.5px;color:var(--ink-2)}
+.cap-new{justify-self:start}
+.gcard.sealed .gico{background:linear-gradient(135deg,#C9B8E8,#8F7BD8);animation:none}
+.gopen.lock{background:var(--surface);color:var(--ink-2);border:1.5px solid var(--line);font-family:var(--f-mono);font-size:11.5px}
+.gcard.nope{animation:nope .4s ease-in-out}
+@keyframes nope{20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+.cap-hero{display:grid;justify-items:center;gap:4px;padding:18px 14px;border-radius:20px;background:linear-gradient(135deg,#FFE3EE,#EDE4FF);color:#24103A;text-align:center}
+.cap-hero .big{font-size:52px;line-height:1.1;animation:gbob 2.4s ease-in-out infinite}
+.cap-hero b{font-size:16px}
+.cap-hero .left{font-family:var(--f-display);font-weight:800;font-size:26px}
+.cap-hero small{font-family:var(--f-mono);font-size:11.5px;font-weight:700;opacity:.7}
+.cap-dt{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cap-dt[hidden]{display:none}
+.cap-when{margin:-4px 0 0;font-family:var(--f-mono);font-size:12.5px;font-weight:700;color:var(--ink)}
+.cap-when.bad{color:#D3245E}
+.modal textarea.cap-text{min-height:170px;font-size:15.5px;line-height:1.45}
+.cap-tip{margin:-8px 0 0;font-size:12px;color:var(--ink-2)}
+.modal label.cap-chk{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--ink)}
+.modal label.cap-chk input{width:20px;height:20px;flex:0 0 auto;accent-color:#FF2E74}
+.btn.armed{background:#24103A;border-color:#24103A;color:#fff}
+.cap-dates{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.62)}
+.cap-card{width:min(640px,100%);animation:pop .7s cubic-bezier(.2,.8,.2,1) both}
+.cap-card .letter{padding:28px 26px;border-radius:22px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12)}
+.cap-env{position:relative;width:250px;height:166px;border:0;padding:0;background:none;cursor:pointer;animation:bob 2.4s ease-in-out infinite;perspective:700px}
+.cap-env i,.cap-env .seal{position:absolute;display:block}
+.cap-env .back{inset:0;border-radius:12px;background:#E9CFAF}
+.cap-env .paper{left:16px;right:16px;top:12px;height:126px;border-radius:6px;background:repeating-linear-gradient(#fff 0 18px,#F3E6F0 18px 19px);transition:transform .9s .45s cubic-bezier(.2,.8,.2,1)}
+.cap-env .front{inset:0;border-radius:12px;background:linear-gradient(160deg,#F7E4CC,#EBCFAD);clip-path:polygon(0 0,50% 58%,100% 0,100% 100%,0 100%);box-shadow:0 26px 40px -18px rgba(0,0,0,.7)}
+.cap-env .flap{left:0;right:0;top:0;height:100px;border-radius:12px 12px 0 0;background:linear-gradient(180deg,#F1D8B8,#DDBB93);clip-path:polygon(0 0,100% 0,50% 100%);transform-origin:50% 0;transition:transform .7s .15s cubic-bezier(.2,.8,.2,1);z-index:3}
+.cap-env .seal{left:50%;top:78px;width:50px;height:50px;margin-left:-25px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FF6B9C,#B3134E 70%);box-shadow:0 0 0 4px rgba(179,19,78,.35),0 5px 0 rgba(0,0,0,.2);color:#FFD7E5;font-family:"Caveat",cursive;font-weight:700;font-size:30px;line-height:50px;text-align:center;z-index:4;transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .45s}
+.cap-env.crack{animation:shake .45s ease-in-out 2}
+.cap-env.open{animation:none}
+.cap-env.open .seal{transform:scale(1.5) rotate(-20deg);opacity:0}
+.cap-env.open .flap{transform:rotateX(180deg);z-index:0}
+.cap-env.open .paper{transform:translateY(-78px)}
+@media (max-width:720px){ .cap-card .letter{padding:22px 18px} }
+@media (max-width:520px){ .gcard.cap{flex-wrap:wrap;row-gap:8px} .gcard.cap .gtx{flex-basis:calc(100% - 60px)} .gcard.cap .gopen{margin-left:60px} }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -445,7 +484,7 @@ function emptyDays(){ var a = []; for (var d = 0; d < 7; d++) a.push({ note:"", 
 function seed(){ return { version:1, updated:Date.now(), weeks:{}, bookings:[], log:[] }; }
 var S = null;
 var me = read("kto-gde-me");
-var ui = { week:null, sel:null, view:"both", sync: DEMO ? "demo" : "load", lastSync:0, anim:"", pending:0, first:true, gift:null, giftAuto:false, giftData:null };
+var ui = { week:null, sel:null, view:"both", sync: DEMO ? "demo" : "load", lastSync:0, anim:"", pending:0, first:true, gift:null, giftAuto:false, giftData:null, caps:[] };
 
 function person(week, who){ var w = S && S.weeks[week]; return (w && w[who]) || { days: emptyDays(), empty:true }; }
 function slotOf(week, who, d, s){ return person(week, who).days[d].slots[s]; }
@@ -512,6 +551,7 @@ function pull(force){
     if (!j.ok && j.error === "bad_code"){ lockOut("Код сменился. Войди заново."); return; }
     if (!j.ok) throw new Error("bad");
     setGift(j.gift);
+    setCaps(j.caps);
     if (!!j.home !== !!ui.homeOk){ ui.homeOk = !!j.home; if (S) render(); if (ui.homeOk) setTimeout(homeAnnounce, 1500); }
     if (j.presence){ ui.pres = j.presence; ui.skew = j.presence.now - Date.now(); updPresence(); }
     if (ui.pending > 0) return;
@@ -533,7 +573,8 @@ var call = function(action, payload){
 };
 function errText(e){
   return ({ bad_code:"Код не подошёл.", network:"Нет связи с таблицей. Проверь интернет.", forbidden:"Это действие не для тебя.",
-            empty_source:"На прошлой неделе у тебя пусто.", not_found:"Бронь уже исчезла." })[e] || "Не получилось сохранить. Попробуй ещё раз.";
+            empty_source:"На прошлой неделе у тебя пусто.", not_found:"Бронь уже исчезла.",
+            cap_empty:"Письмо пустое.", cap_date:"Выбери момент в будущем.", cap_sealed:"Капсула ещё запечатана." })[e] || "Не получилось сохранить. Попробуй ещё раз.";
 }
 /* demo mode mirrors the server */
 function ensure(week, who){ S.weeks[week] = S.weeks[week] || {}; S.weeks[week][who] = S.weeks[week][who] || { days: emptyDays() }; delete S.weeks[week][who].empty; return S.weeks[week][who]; }
@@ -645,7 +686,7 @@ function ping(){
   }).catch(function(){});
 }
 // сайт обновился — тихо перезагрузиться, когда ничего не открыто
-var APP_V = "14";
+var APP_V = "15";
 function checkVersion(){
   fetch("version.txt?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.text() : ""; }).then(function(v){
     v = (v || "").trim();
@@ -846,14 +887,18 @@ function homePreview(){
 /* ---------- склад подарков: значок в шапке ---------- */
 function giftUnseen(){ return ui.gift && !ui.gift.preview && !read("kto-gde-gift-" + ui.gift.id); }
 function giftIcon(){
-  if (!ui.gift) return null;
-  return el("button",{type:"button",class:"gifticon" + (giftUnseen() ? " new" : ""),title:"Склад подарков","aria-label":"Склад подарков",onclick:openGiftStore},[
+  if (!ui.gift && !(ui.caps && ui.caps.length) && !(me && CAP_AUTHORS.indexOf(me.who) >= 0)) return null;
+  var dot = giftUnseen() || capsUnseen();
+  return el("button",{type:"button",class:"gifticon" + (dot ? " new" : ""),title:"Склад подарков","aria-label":"Склад подарков",onclick:openGiftStore},[
     el("span",{class:"gi-box","aria-hidden":"true"},[el("i",{class:"gi-lid"}), el("i",{class:"gi-rib"})]),
-    giftUnseen() ? el("span",{class:"gi-dot"}) : null
+    dot ? el("span",{class:"gi-dot"}) : null
   ]);
 }
 function openGiftStore(){
-  showModal("🎁 Склад подарков", ui.gift && ui.gift.preview ? "Все подарки для Саши. Открывай, чтобы посмотреть, как она их видит." : "Все подарки от Артура — можно открывать сколько угодно.", [giftShelf()]);
+  var author = me && CAP_AUTHORS.indexOf(me.who) >= 0;
+  (ui.caps || []).forEach(function(c){ if (c.to === me.who && !capIsOpen(c)) store("kto-gde-cap-seen-" + c.id, 1); });
+  showModal("🎁 Склад подарков", author ? "Подарки и капсулы времени для Саши. Открывай, чтобы посмотреть, как она их видит." : "Всё, что оставил Артур. Подарки можно открывать сколько угодно.", [el("div",{class:"gstore"}, storeBody())]);
+  if (S) render();
 }
 function giftShelf(){
   var gifts = ui.gift ? [ui.gift] : [];
@@ -869,6 +914,204 @@ function giftShelf(){
   });
   return el("div",{class:"gs-row"},cards);
 }
+/* ---------- капсулы времени: Артур пишет письмо, Саше оно откроется в выбранный момент ---------- */
+var CAP_AUTHORS = ["artur"];
+function plur(n, a, b, c){ var m10 = n % 10, m100 = n % 100; return m10 === 1 && m100 !== 11 ? a : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? b : c; }
+function capNow(){ return Date.now() + (ui.skew || 0); }
+function capIsOpen(c){ return c.open || capNow() >= c.at; }
+function capDate(ms){
+  var d = new Date(ms);
+  return d.toLocaleDateString("ru-RU",{ timeZone:"Europe/Minsk", day:"numeric", month:"long", year:"numeric" }).replace(/\s*г\.?$/, "") + " в " + d.toLocaleTimeString("ru-RU",{ timeZone:"Europe/Minsk", hour:"2-digit", minute:"2-digit" });
+}
+function capLeft(at){
+  var d = at - capNow();
+  if (d <= 0) return "уже открылась";
+  var m = Math.floor(d / 60000), h = Math.floor(m / 60), dd = Math.floor(h / 24);
+  if (dd >= 2) return "через " + dd + " " + plur(dd, "день", "дня", "дней");
+  if (dd === 1) return "через 1 день " + (h - 24) + " ч";
+  if (h >= 1) return "через " + h + " ч " + (m % 60) + " мин";
+  if (m >= 1) return "через " + m + " мин";
+  return "вот-вот";
+}
+function setCaps(c){
+  c = c || [];
+  var before = JSON.stringify(ui.caps || []), after = JSON.stringify(c);
+  ui.caps = c;
+  if (before !== after){ if (S) render(); refreshStore(); }
+  capsAuto();
+}
+function capsUnseen(){
+  if (!me) return false;
+  return (ui.caps || []).some(function(c){ return c.to === me.who && (capIsOpen(c) ? !c.read : !read("kto-gde-cap-seen-" + c.id)); });
+}
+// Саше: новая запечатанная капсула — один раз показать; открылась — один раз поднести конверт
+var capsAutoT = null;
+function capsAuto(){
+  if (!me || capsAutoT) return;
+  var mineTo = (ui.caps || []).filter(function(c){ return c.to === me.who; }).sort(function(a, b){ return a.at - b.at; });
+  var opened = mineTo.filter(function(c){ return capIsOpen(c) && !c.read && !read("kto-gde-cap-auto-" + c.id); })[0];
+  var fresh = mineTo.filter(function(c){ return !capIsOpen(c) && !read("kto-gde-cap-seen-" + c.id); })[0];
+  if (!opened && !fresh) return;
+  if (document.querySelector(".gift-ov") || document.getElementById("modal-root").querySelector(".scrim") || (ui.gift && !ui.gift.preview && !read("kto-gde-gift-" + ui.gift.id))){
+    capsAutoT = setTimeout(function(){ capsAutoT = null; capsAuto(); }, 4000); return;
+  }
+  if (opened){ store("kto-gde-cap-auto-" + opened.id, 1); store("kto-gde-cap-seen-" + opened.id, 1); openCapsule(opened); return; }
+  store("kto-gde-cap-seen-" + fresh.id, 1);
+  if (S) render();
+  showModal("💌 Тебе капсула времени", "Артур написал письмо, которое откроется только " + capDate(fresh.at) + ". До этого его не может прочитать никто — даже он.", [
+    el("div",{class:"cap-hero"},[
+      el("span",{class:"big","aria-hidden":"true",text:"💌"}),
+      fresh.title ? el("b",{text:"«" + fresh.title + "»"}) : null,
+      el("span",{class:"left","data-capleft":fresh.at,text:capLeft(fresh.at)}),
+      el("small",{text:"Когда откроется — придёт сообщение в Telegram"})
+    ]),
+    el("div",{class:"mrow"},[el("button",{type:"button",class:"btn ghost",text:"Все подарки",onclick:function(){ closeModal(); setTimeout(openGiftStore, 200); }}), el("button",{type:"button",class:"btn pink",text:"Буду ждать",onclick:closeModal})])
+  ]);
+}
+function capCard(c){
+  var mine = me.who === c.from, open = capIsOpen(c);
+  var name = c.title ? "«" + c.title + "»" : mine ? "Капсула для Саши" : "Капсула от Артура";
+  var sub, btn;
+  if (!open){ sub = (mine && c.title ? "для Саши · " : !mine && c.title ? "от Артура · " : "") + "откроется " + capDate(c.at); btn = el("span",{class:"gopen lock","data-capleft":c.at,text:capLeft(c.at)}); }
+  else if (mine){ sub = "открылась " + capDate(c.at) + " · " + (c.opens ? "Саша читала " + c.opens + " " + plur(c.opens, "раз", "раза", "раз") : "Саша ещё не читала"); btn = el("span",{class:"gopen",text:"Прочитать"}); }
+  else { sub = (c.title ? "от Артура · " : "") + "запечатана " + capDate(c.made); btn = el("span",{class:"gopen",text:c.read ? "Перечитать" : "Открыть"}); }
+  var b = el("button",{type:"button",class:"gcard cap" + (open ? "" : " sealed"),onclick:function(){
+    if (!capIsOpen(c)){ b.classList.remove("nope"); void b.offsetWidth; b.classList.add("nope"); toast("Ещё запечатана. Откроется " + capLeft(c.at)); return; }
+    closeModal(); setTimeout(function(){ openCapsule(c); }, 200);
+  }},[el("span",{class:"gico",text:open ? "💌" : "🔒"}), el("span",{class:"gtx"},[el("b",{text:name}), el("small",{text:sub})]), btn]);
+  return b;
+}
+function storeBody(){
+  var kids = [], author = CAP_AUTHORS.indexOf(me.who) >= 0, list = (ui.caps || []).slice().sort(function(a, b){ return a.at - b.at; });
+  if (ui.gift) kids.push(giftShelf());
+  if (author || list.length){
+    kids.push(el("div",{class:"gs-h"},[el("span",{text:"💌 Капсулы времени"}), list.length ? el("small",{text:list.length + " " + plur(list.length, "капсула", "капсулы", "капсул")}) : null]));
+    if (author) kids.push(el("p",{class:"cap-intro",text:"Письмо, которое откроется Саше в выбранный момент. После запечатывания его не прочитает никто — даже ты."}));
+    if (list.length) kids.push(el("div",{class:"gs-row"}, list.map(capCard)));
+    if (author) kids.push(el("button",{type:"button",class:"btn pink cap-new",text:"✍️ Запечатать новую капсулу",onclick:function(){ closeModal(); setTimeout(openCapCompose, 200); }}));
+  }
+  return kids;
+}
+function refreshStore(){
+  var box = document.querySelector(".gstore"); if (!box) return;
+  box.textContent = ""; storeBody().forEach(function(k){ box.appendChild(k); });
+}
+// живой отсчёт; капсула открывается на сайте ровно в своё время, не дожидаясь опроса
+setInterval(function(){
+  document.querySelectorAll("[data-capleft]").forEach(function(x){ x.textContent = capLeft(+x.getAttribute("data-capleft")); });
+  var flip = false;
+  (ui.caps || []).forEach(function(c){ if (!c.open && capNow() >= c.at){ c.open = true; flip = true; } });
+  if (flip){ if (S && !document.querySelector(".gift-ov")) render(); refreshStore(); capsAuto(); }
+}, 15000);
+
+function openCapsule(c, preview){
+  var host = document.getElementById("gift-root"); host.textContent = "";
+  var hint = el("p",{class:"gift-hint",text:"Нажми на печать"});
+  var env = el("button",{type:"button",class:"cap-env","aria-label":"Сломать печать и открыть капсулу"},[el("i",{class:"back"}), el("i",{class:"paper"}), el("i",{class:"front"}), el("i",{class:"flap"}), el("span",{class:"seal",text:"А"})]);
+  var kick = preview ? "Предпросмотр: так капсулу увидит Саша" : me.who === c.from ? "Твоя капсула для Саши" : "Капсула времени от Артура";
+  var dates = preview ? "запечатана сегодня · откроется " + capDate(c.at) : "запечатана " + capDate(c.made) + " · открылась " + capDate(c.at);
+  var stage = el("div",{class:"gift-stage"},[el("div",{class:"gift-kicker",text:kick}), el("div",{class:"cap-dates",text:dates}), env, hint]);
+  var ov = el("div",{class:"gift-ov",role:"dialog","aria-modal":"true","aria-label":"Капсула времени"},[el("button",{type:"button",class:"gift-close","aria-label":"Закрыть",text:"×",onclick:closeGift}), stage]);
+  host.appendChild(ov); env.focus();
+  env.addEventListener("click", function(){
+    if (env.dataset.busy) return; env.dataset.busy = "1"; hint.textContent = "Открываю…";
+    var dataP = preview ? Promise.resolve({ text:preview.text })
+      : call("capRead", { id:c.id }).then(function(j){ if (!j.ok) throw new Error(j.error || "bad"); return j; });
+    env.classList.add("crack");
+    Promise.all([dataP, wait(900)]).then(function(r){
+      env.classList.add("open"); burst(stage);
+      setTimeout(function(){ showCapLetter(ov, stage, c, r[0].text, !!preview); if (r[0].caps) setCaps(r[0].caps); }, 1150);
+    }).catch(function(e){
+      env.classList.remove("crack"); delete env.dataset.busy;
+      hint.textContent = e && e.message === "cap_sealed" ? "Ещё рано — капсула пока запечатана." : "Не получилось открыть. Попробуй ещё раз.";
+    });
+  });
+}
+function showCapLetter(ov, stage, c, text, preview){
+  var paras = String(text || "").split(/\n+/).map(function(t){ return t.trim(); }).filter(Boolean).map(function(t){ return el("p",{text:t}); });
+  var reply;
+  if (preview) reply = el("div",{class:"gift-note",text:"Это предпросмотр. Саша увидит конверт с печатью, и письмо будет печататься у неё на глазах так же."});
+  else if (me.who === c.to){
+    var ta = el("textarea",{id:"cap-reply-text",maxlength:"500",placeholder:"напиши пару слов…"});
+    var send = el("button",{type:"button",class:"btn",text:"Ответить Артуру"});
+    reply = el("div",{class:"gift-reply"},[el("label",{for:"cap-reply-text",text:"Ответить Артуру"}), ta, send]);
+    send.addEventListener("click", function(){
+      var t = ta.value.trim(); if (!t){ ta.focus(); return; }
+      send.disabled = true; send.textContent = "Отправляю…";
+      call("capReply", { id:c.id, text:t }).then(function(j){
+        if (j.ok) reply.replaceWith(el("div",{class:"gift-note",text:"Отправлено. Артур уже читает 💌"}));
+        else { send.disabled = false; send.textContent = "Ответить Артуру"; toast(errText(j.error)); }
+      });
+    });
+  }
+  else reply = el("div",{class:"gift-note",text:c.opens ? "Саша читала эту капсулу " + c.opens + " " + plur(c.opens, "раз", "раза", "раз") + ". О каждом открытии и её ответе приходит сообщение в Telegram." : "Саша ещё не открывала эту капсулу. Когда откроет — придёт сообщение в Telegram."});
+  var letter = el("div",{class:"letter"},[el("h3",{text:c.title || "Капсула времени"}), el("div",{class:"cap-dates",text:preview ? "откроется " + capDate(c.at) : "запечатана " + capDate(c.made)})].concat(paras, [el("p",{class:"sign later",text:"Артур ♡"}), reply]));
+  reply.classList.add("later");
+  var card = el("div",{class:"cap-card"},[letter]);
+  stage.replaceWith(card); ov.scrollTop = 0;
+  typeLetter(letter, paras, [letter.querySelector(".sign"), reply]);
+}
+
+function openCapCompose(){
+  var DRAFT = "kto-gde-cap-draft", dr = read(DRAFT) || {};
+  var nowM = new Date(Date.now() + 3 * 3600000); // «сейчас» по Минску в UTC-полях
+  var Y = nowM.getUTCFullYear(), Mo = nowM.getUTCMonth(), D = nowM.getUTCDate();
+  function isoOf(y, m, d, t){ var x = new Date(Date.UTC(y, m, 1)); var last = new Date(Date.UTC(y, m + 1, 0)).getUTCDate(); return x.getUTCFullYear() + "-" + pad(x.getUTCMonth() + 1) + "-" + pad(Math.min(d, last)) + "T" + t; }
+  function msOf(iso){ var m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(iso || ""); return m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4] - 3, +m[5]) : NaN; }
+  var PRE = [["1m","Через месяц"],["6m","Через полгода"],["1y","Через год"],["ny","В Новый год"],["own","Своя дата"]];
+  var sel = dr.preset || "6m";
+  var title = el("input",{type:"text",maxlength:"60",placeholder:"например: «Через полгода» или «Открой, когда станет грустно»",value:dr.title || ""});
+  var date = el("input",{type:"date",min:Y + "-" + pad(Mo + 1) + "-" + pad(D),value:dr.date || ""}), time = el("input",{type:"time",value:dr.time || "20:00"});
+  var own = el("div",{class:"cap-dt"},[el("label",{},["День", date]), el("label",{},["Время (Минск)", time])]);
+  var when = el("p",{class:"cap-when"});
+  var text = el("textarea",{class:"cap-text",maxlength:"6000",placeholder:"Напиши то, что Саша прочитает в тот день…"}); text.value = dr.text || "";
+  var notify = el("input",{type:"checkbox"}); notify.checked = dr.notify !== false;
+  var btnsP = el("div",{class:"opts"});
+  function iso(){
+    if (sel === "1m") return isoOf(Y, Mo + 1, D, "20:00");
+    if (sel === "6m") return isoOf(Y, Mo + 6, D, "20:00");
+    if (sel === "1y") return isoOf(Y + 1, Mo, D, "20:00");
+    if (sel === "ny") return (Y + 1) + "-01-01T00:00";
+    return date.value && time.value ? date.value + "T" + time.value : "";
+  }
+  function upd(){
+    btnsP.querySelectorAll("button").forEach(function(b){ b.setAttribute("aria-pressed", b.dataset.k === sel ? "true" : "false"); });
+    own.hidden = sel !== "own";
+    var ms = msOf(iso());
+    if (isNaN(ms)) { when.textContent = "Выбери день и время"; when.className = "cap-when bad"; }
+    else if (ms <= Date.now() + 60000) { when.textContent = "Это уже прошло — выбери момент в будущем"; when.className = "cap-when bad"; }
+    else { when.textContent = "🔒 Откроется " + capDate(ms) + " — " + capLeft(ms + (ui.skew || 0)); when.className = "cap-when"; }
+    store(DRAFT, { preset:sel, title:title.value, date:date.value, time:time.value, text:text.value, notify:notify.checked });
+  }
+  PRE.forEach(function(p){ btnsP.appendChild(el("button",{type:"button",class:"opt","data-k":p[0],text:p[1],onclick:function(){ sel = p[0]; upd(); if (sel === "own") date.focus(); }})); });
+  [title, date, time, text].forEach(function(x){ x.addEventListener("input", upd); }); notify.addEventListener("change", upd);
+  var seal = el("button",{type:"button",class:"btn pink",text:"Запечатать 🔒"}), armT = null;
+  var prev = el("button",{type:"button",class:"btn ghost",text:"Предпросмотр",onclick:function(){
+    var ms = msOf(iso()); if (!text.value.trim()){ text.focus(); toast("Сначала напиши письмо"); return; }
+    openCapsule({ title:title.value.trim(), at:isNaN(ms) ? Date.now() : ms, made:Date.now(), from:me.who, to:"sasha" }, { text:text.value });
+  }});
+  seal.addEventListener("click", function(){
+    var at = iso(), ms = msOf(at);
+    if (!text.value.trim()){ text.focus(); toast("Письмо пустое"); return; }
+    if (isNaN(ms) || ms <= Date.now() + 60000){ toast("Выбери момент в будущем"); return; }
+    if (!seal.classList.contains("armed")){ seal.classList.add("armed"); seal.textContent = "Точно? Изменить будет нельзя"; clearTimeout(armT); armT = setTimeout(function(){ seal.classList.remove("armed"); seal.textContent = "Запечатать 🔒"; }, 5000); return; }
+    clearTimeout(armT); seal.disabled = true; prev.disabled = true; seal.textContent = "Запечатываю…";
+    call("capSeal", { title:title.value.trim(), at:at, text:text.value, notify:notify.checked }).then(function(j){
+      if (j.ok){ store(DRAFT, null); closeModal(); toast("Капсула запечатана 🔒"); setCaps(j.caps); setTimeout(openGiftStore, 250); }
+      else { seal.disabled = false; prev.disabled = false; seal.classList.remove("armed"); seal.textContent = "Запечатать 🔒"; toast(errText(j.error)); }
+    }).catch(function(){ seal.disabled = false; prev.disabled = false; seal.classList.remove("armed"); seal.textContent = "Запечатать 🔒"; toast(errText("network")); });
+  });
+  showModal("💌 Капсула времени для Саши", "Письмо откроется ей в выбранный момент. После запечатывания его не прочитает и не изменит никто — даже ты.", [
+    el("div",{class:"fld"},["Когда открыть", btnsP]), own, when,
+    el("label",{},["Название на конверте (видно сразу)", title]),
+    el("label",{},["Письмо", text]),
+    el("p",{class:"cap-tip",text:"Каждая строка — новый абзац. [[слово]] напишется и сотрётся, будто ты сомневаешься."}),
+    el("label",{class:"cap-chk"},[notify, "Сразу написать Саше в Telegram, что её ждёт капсула"]),
+    el("div",{class:"mrow"},[prev, seal])
+  ]);
+  upd();
+}
+
 function withHTML(e, h){ e.innerHTML = h; return e; }
 function homeBanner(){
   return el("section",{class:"homeb"},[

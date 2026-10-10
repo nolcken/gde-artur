@@ -316,7 +316,7 @@ function npcTick(){
 }
 
 /* ---------- присутствие и обновления ---------- */
-var APP_V = "14";
+var APP_V = "15";
 function bye(){ try { if (navigator.sendBeacon) navigator.sendBeacon(API, JSON.stringify({ action:"bye", who:me.who, code:me.code })); } catch (e) {} }
 function checkVersion(){
   fetch("version.txt?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.text() : ""; }).then(function(v){
