@@ -30,7 +30,14 @@ var S = { committed:null, pending:[], local:null, cal:null, skew:0, inflight:fal
 function now(){ return Date.now() + S.skew; }
 function H(){ return S.local; }
 function recompute(){ var h = CO.clone(S.committed); S.pending.forEach(function(op){ var t = CO.clone(h), r = CO.apply(t, op); if (r.ok) h = t; }); S.local = h; }
-function api(body){ return fetch(API, { method:"POST", body:JSON.stringify(Object.assign({ who:me.who, code:me.code }, body)) }).then(function(r){ return r.json(); }); }
+function devTag(){
+  var u = navigator.userAgent || "", os = /iPhone/.test(u) ? "iPhone" : (/iPad/.test(u) || (/Macintosh/.test(u) && navigator.maxTouchPoints > 1)) ? "iPad" : /Android/.test(u) ? "Android" : /Mac OS X/.test(u) ? "Mac" : /Windows/.test(u) ? "Windows" : "другое";
+  var br = /YaBrowser/.test(u) ? "Яндекс" : /Telegram/i.test(u) ? "Telegram" : /Instagram/.test(u) ? "Instagram" : /Edg/.test(u) ? "Edge" : /CriOS|Chrome\//.test(u) ? "Chrome" : /FxiOS|Firefox/.test(u) ? "Firefox" : /Safari/.test(u) ? "Safari" : "";
+  var pwa = false; try { pwa = !!(navigator.standalone || matchMedia("(display-mode: standalone)").matches); } catch (e) {}
+  return os + (br ? ", " + br : "") + (pwa ? ", ярлык на экране" : "");
+}
+var DEV = devTag();
+function api(body){ return fetch(API, { method:"POST", body:JSON.stringify(Object.assign({ who:me.who, code:me.code, cv:APP_V, dev:DEV }, body)) }).then(function(r){ return r.json(); }); }
 function act(t, a, quiet){
   var op = { t:t, a:a || {}, who:me.who, ts:now() }, test = CO.clone(S.local), before = { c:test.coins, h:test.hearts, l:CO.level(test) };
   var r = CO.apply(test, op);
@@ -309,7 +316,7 @@ function npcTick(){
 }
 
 /* ---------- присутствие и обновления ---------- */
-var APP_V = "13";
+var APP_V = "14";
 function bye(){ try { if (navigator.sendBeacon) navigator.sendBeacon(API, JSON.stringify({ action:"bye", who:me.who, code:me.code })); } catch (e) {} }
 function checkVersion(){
   fetch("version.txt?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.text() : ""; }).then(function(v){

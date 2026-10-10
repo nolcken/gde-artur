@@ -374,7 +374,7 @@ footer{font-size:13px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:6px 16p
 <div id="modal-root"></div>
 <div id="gift-root"></div>
 <script src="config.js"></script>
-<script src="dom-art.js?v=8"></script>
+<script src="dom-art.js?v=9"></script>
 <script>
 (function(){
 "use strict";
@@ -496,10 +496,19 @@ function whenTxt(o){
 
 /* ---------- network ---------- */
 function setSync(s){ ui.sync = s; if (s === "ok") ui.lastSync = Date.now(); var x = document.getElementById("sync"); if (x) x.replaceWith(syncEl()); }
+// версия сайта и устройство — уходят с каждым запросом (Артуру видно, что у Саши свежая версия)
+function devTag(){
+  var u = navigator.userAgent || "", os = /iPhone/.test(u) ? "iPhone" : (/iPad/.test(u) || (/Macintosh/.test(u) && navigator.maxTouchPoints > 1)) ? "iPad" : /Android/.test(u) ? "Android" : /Mac OS X/.test(u) ? "Mac" : /Windows/.test(u) ? "Windows" : "другое";
+  var br = /YaBrowser/.test(u) ? "Яндекс" : /Telegram/i.test(u) ? "Telegram" : /Instagram/.test(u) ? "Instagram" : /Edg/.test(u) ? "Edge" : /CriOS|Chrome\//.test(u) ? "Chrome" : /FxiOS|Firefox/.test(u) ? "Firefox" : /Safari/.test(u) ? "Safari" : "";
+  var pwa = false; try { pwa = !!(navigator.standalone || matchMedia("(display-mode: standalone)").matches); } catch (e) {}
+  return os + (br ? ", " + br : "") + (pwa ? ", ярлык на экране" : "");
+}
+var DEV = devTag();
+function stamp(b){ b.cv = APP_V; b.dev = DEV; return b; }
 function pull(force){
   if (DEMO || !me || ui.pending > 0) return Promise.resolve();
   var body = { action:"get", who:me.who, code:me.code, v: S && !force ? S.version : 0 };
-  return fetch(API, { method:"POST", body: JSON.stringify(body) }).then(function(r){ return r.json(); }).then(function(j){
+  return fetch(API, { method:"POST", body: JSON.stringify(stamp(body)) }).then(function(r){ return r.json(); }).then(function(j){
     if (!j.ok && j.error === "bad_code"){ lockOut("Код сменился. Войди заново."); return; }
     if (!j.ok) throw new Error("bad");
     setGift(j.gift);
@@ -513,7 +522,7 @@ function pull(force){
 var call = function(action, payload){
   if (DEMO){ store("kto-gde-demo", S); return Promise.resolve({ ok:true }); }
   var body = Object.assign({ action:action, who:me && me.who, code:me && me.code }, payload || {});
-  return fetch(API, { method:"POST", body: JSON.stringify(body) })
+  return fetch(API, { method:"POST", body: JSON.stringify(stamp(body)) })
     .then(function(r){ return r.json(); })
     .then(function(j){
       if (j.ok && j.state){ S = j.state; store("kto-gde-cache", S); setSync("ok"); }
@@ -621,7 +630,9 @@ function presEl(who){
           : " " + f(t, { day:"numeric", month:"long" }) + " в " + hm);
     }
   }
-  return el("span",{class:"seen" + (on ? " on" : ""),"data-pres":who,title:on ? "Сейчас на сайте" : "Последний раз на сайте"},[el("i"), txt]);
+  var tip = on ? "Сейчас на сайте" : "Последний раз на сайте";
+  if (me.who === "artur" && who !== me.who && p.cli !== undefined){ txt += p.cli ? " · " + p.cli.split(" · ")[0] : " · старая версия"; tip += p.cli ? " — " + p.cli : " — версия без автообновления (или ещё не заходила после обновления)"; }
+  return el("span",{class:"seen" + (on ? " on" : ""),"data-pres":who,title:tip},[el("i"), txt]);
 }
 function updPresence(){
   document.querySelectorAll("[data-pres]").forEach(function(x){ var n = presEl(x.getAttribute("data-pres")); if (n) x.replaceWith(n); });
@@ -629,12 +640,12 @@ function updPresence(){
 // пульс «я на сайте»: идёт всегда, пока вкладка видна (даже если открыто окно)
 function ping(){
   if (DEMO || !me || document.hidden) return;
-  fetch(API, { method:"POST", body:JSON.stringify({ action:"ping", who:me.who, code:me.code }) }).then(function(r){ return r.json(); }).then(function(j){
+  fetch(API, { method:"POST", body:JSON.stringify(stamp({ action:"ping", who:me.who, code:me.code })) }).then(function(r){ return r.json(); }).then(function(j){
     if (j.ok && j.presence){ ui.pres = j.presence; ui.skew = j.presence.now - Date.now(); updPresence(); }
   }).catch(function(){});
 }
 // сайт обновился — тихо перезагрузиться, когда ничего не открыто
-var APP_V = "13";
+var APP_V = "14";
 function checkVersion(){
   fetch("version.txt?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.text() : ""; }).then(function(v){
     v = (v || "").trim();
@@ -878,7 +889,7 @@ function homeAnnounce(){
   store("kto-gde-home-seen-" + me.who, 1);
   showModal("🏡 У нас теперь есть дом!", "Общий, на двоих. Его можно обставлять, сажать сад и вместе выполнять задания мишек.", [
     withHTML(el("a",{class:"hb-modal-art",href:"dom.html"}), homePreview()),
-    el("div",{class:"mrow"},[el("button",{type:"button",class:"btn ghost",text:"Позже",onclick:closeModal}), el("a",{class:"btn pink home-btn",href:"dom.html",text:"Зайти домой →"})])
+    el("div",{class:"mrow"},[el("button",{type:"button",class:"btn ghost",text:"Позже",onclick:function(){ closeModal(); call("note", { what:"homeLater" }).catch(function(){}); }}), el("a",{class:"btn pink home-btn",href:"dom.html",text:"Зайти домой →"})])
   ]);
 }
 
